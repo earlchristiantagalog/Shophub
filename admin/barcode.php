@@ -2,53 +2,56 @@
 // MUST be first — no spaces or BOM before this line!
 declare(strict_types=1);
 
-require __DIR__ . 'db.php';
-require __DIR__ . 'vendor/autoload.php'; // <-- FIXED: correct vendor path
+require __DIR__ . '/../includes/db.php';
+require __DIR__ . '/../vendor/autoload.php'; 
 
-use Picqer\Barcode\BarcodeGeneratorPNG;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 
-// Disable all output except the image
+// Disable warnings; output only PNG
 error_reporting(E_ERROR | E_PARSE);
-ob_clean();  
+ob_clean();
 header('Content-Type: image/png');
 
 // Get tracking code
 $trackingCode = $_GET['code'] ?? '';
 $trackingCode = preg_replace('/[^A-Za-z0-9\-_]/', '', $trackingCode);
 
-// Handle missing tracking code
+// If missing tracking code → return simple error image
 if (empty($trackingCode)) {
-    $im = imagecreatetruecolor(300, 60);
+    $im = imagecreatetruecolor(200, 200);
     $bg = imagecolorallocate($im, 255, 255, 255);
     $textc = imagecolorallocate($im, 0, 0, 0);
-    imagefilledrectangle($im, 0, 0, 300, 60, $bg);
-    imagestring($im, 3, 10, 20, 'Invalid tracking code', $textc);
+    imagefilledrectangle($im, 0, 0, 200, 200, $bg);
+    imagestring($im, 4, 20, 90, 'Invalid QR Code', $textc);
     imagepng($im);
     imagedestroy($im);
     exit;
 }
 
 try {
-    $generator = new BarcodeGeneratorPNG();
 
-    // CODE 128 always works with A-Z, 0-9, -, _
-    $barcode = $generator->getBarcode(
-        $trackingCode,
-        $generator::TYPE_CODE_128,
-        2,   // scale
-        60   // height
-    );
+    $options = new QROptions([
+        'version' => 7,
+        'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+        'eccLevel' => QRCode::ECC_M,
+        'scale' => 6,     // QR size
+        'imageBase64' => false, // we output raw PNG
+    ]);
 
-    echo $barcode;
+    $qr = (new QRCode($options))->render($trackingCode);
+
+    echo $qr; // Output PNG
     exit;
 
 } catch (Exception $e) {
-    // Fallback: display error text
-    $im = imagecreatetruecolor(300, 60);
+
+    // Fallback error QR image
+    $im = imagecreatetruecolor(200, 200);
     $bg = imagecolorallocate($im, 255, 255, 255);
     $textc = imagecolorallocate($im, 0, 0, 0);
-    imagefilledrectangle($im, 0, 0, 300, 60, $bg);
-    imagestring($im, 3, 10, 20, 'Error generating barcode', $textc);
+    imagefilledrectangle($im, 0, 0, 200, 200, $bg);
+    imagestring($im, 4, 20, 90, 'QR Error', $textc);
     imagepng($im);
     imagedestroy($im);
 }

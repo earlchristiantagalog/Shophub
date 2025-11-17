@@ -559,35 +559,35 @@ include 'includes/header.php';
                 </div>
                 <div class="card-body">
 
-                <!-- GCash -->
-        <label class="payment-method">
-            <input type="radio" name="payment" value="GCash">
-            <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=40&h=40&fit=crop" alt="GCash">
-            <div class="payment-text">
-                <strong>GCash</strong>
-                <div class="text-muted">Pay with your GCash e-wallet</div>
-            </div>
-        </label>
+                    <!-- GCash -->
+                    <label class="payment-method">
+                        <input type="radio" name="payment" value="GCash">
+                        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=40&h=40&fit=crop" alt="GCash">
+                        <div class="payment-text">
+                            <strong>GCash</strong>
+                            <div class="text-muted">Pay with your GCash e-wallet</div>
+                        </div>
+                    </label>
 
                     <!-- Credit/Debit Card -->
-        <label class="payment-method">
-            <input type="radio" name="payment" value="Card">
-            <i class="fas fa-credit-card text-primary"></i>
-            <div class="payment-text">
-                <strong>Credit/Debit Card</strong>
-                <div class="text-muted">Visa, Mastercard, American Express</div>
-            </div>
-        </label>
+                    <label class="payment-method">
+                        <input type="radio" name="payment" value="Card">
+                        <i class="fas fa-credit-card text-primary"></i>
+                        <div class="payment-text">
+                            <strong>Credit/Debit Card</strong>
+                            <div class="text-muted">Visa, Mastercard, American Express</div>
+                        </div>
+                    </label>
 
-                   <!-- Cash on Delivery -->
-        <label class="payment-method selected">
-            <input type="radio" name="payment" value="COD" checked>
-            <i class="fas fa-money-bill-wave text-success"></i>
-            <div class="payment-text">
-                <strong>Cash on Delivery</strong>
-                <div class="text-muted">Pay when you receive your order</div>
-            </div>
-        </label>
+                    <!-- Cash on Delivery -->
+                    <label class="payment-method selected">
+                        <input type="radio" name="payment" value="COD" checked>
+                        <i class="fas fa-money-bill-wave text-success"></i>
+                        <div class="payment-text">
+                            <strong>Cash on Delivery</strong>
+                            <div class="text-muted">Pay when you receive your order</div>
+                        </div>
+                    </label>
                 </div>
             </div>
         </div>
@@ -672,8 +672,8 @@ include 'includes/header.php';
                         <input type="hidden" id="promo_code" name="promo_code" value="<?= htmlspecialchars($promo_code) ?>">
                         <!-- New Hidden Inputs -->
                         <input type="hidden" id="shipping_method" name="shipping_method" value="Standard">
-                         <!-- Hidden field for PHP -->
-        <input type="hidden" id="payment_method" name="payment_method" value="COD">
+                        <!-- Hidden field for PHP -->
+                        <input type="hidden" id="payment_method" name="payment_method" value="COD">
                         <button type="submit" id="placeOrderBtn" name="place_order" class="btn btn-primary w-100 mt-3">
                             <i class="fas fa-lock me-2"></i>Place Order
                         </button>
@@ -681,42 +681,158 @@ include 'includes/header.php';
                 </div>
             </div>
 
-            <!-- Voucher Selection -->
+            <!-- 🎟️ Voucher Section -->
             <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-ticket-alt text-danger me-2"></i>Available Vouchers</h6>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-ticket-alt text-danger me-2"></i>Available Voucher</h6>
+                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#voucherModal">
+                        Choose Voucher
+                    </button>
                 </div>
-                <div class="card-body">
-                    <div class="row g-2">
-                        <!-- Example Voucher Card -->
-                        <div class="col-12">
-                            <div class="voucher-card border rounded p-2 d-flex align-items-center justify-content-between"
-                                style="cursor:pointer;" onclick="applyVoucher('DISCOUNT50', 50)">
-                                <div>
-                                    <h6 class="mb-0 text-danger">₱50 OFF</h6>
-                                    <small class="text-muted">Min. spend ₱500</small>
+                <div class="card-body" id="voucherPreviewArea">
+                    <p id="noVoucherText" class="text-muted mb-0">No voucher selected</p>
+                </div>
+            </div>
+
+            <!-- 🎟️ Voucher Modal -->
+            <div class="modal fade" id="voucherModal" tabindex="-1" aria-labelledby="voucherModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title" id="voucherModalLabel">
+                                <i class="fas fa-ticket-alt me-2"></i>Select a Voucher
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="row g-2">
+                                <!-- Example Vouchers -->
+                                <div class="col-12">
+                                    <div class="voucher-card border rounded p-3 d-flex align-items-center justify-content-between"
+                                        onclick="selectVoucher('DISCOUNT50', 50, 500)">
+                                        <div>
+                                            <h6 class="mb-1 text-danger">₱50 OFF</h6>
+                                            <small class="text-muted">Min. spend ₱500</small>
+                                        </div>
+                                        <i class="fas fa-check-circle text-success d-none" id="check-DISCOUNT50"></i>
+                                    </div>
                                 </div>
-                                <i class="fas fa-check-circle text-success d-none" id="voucher-DISCOUNT50"></i>
+
+                                <div class="col-12">
+                                    <div class="voucher-card border rounded p-3 d-flex align-items-center justify-content-between"
+                                        onclick="selectVoucher('DISCOUNT100', 100, 1000)">
+                                        <div>
+                                            <h6 class="mb-1 text-danger">₱100 OFF</h6>
+                                            <small class="text-muted">Min. spend ₱1000</small>
+                                        </div>
+                                        <i class="fas fa-check-circle text-success d-none" id="check-DISCOUNT100"></i>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="voucher-card border rounded p-3 d-flex align-items-center justify-content-between"
+                                        onclick="selectVoucher('FREESHIP', 0, 0)">
+                                        <div>
+                                            <h6 class="mb-1 text-primary">Free Shipping</h6>
+                                            <small class="text-muted">No minimum spend</small>
+                                        </div>
+                                        <i class="fas fa-check-circle text-success d-none" id="check-FREESHIP"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-12">
-                            <div class="voucher-card border rounded p-2 d-flex align-items-center justify-content-between"
-                                style="cursor:pointer;" onclick="applyVoucher('DISCOUNT100', 100)">
-                                <div>
-                                    <h6 class="mb-0 text-danger">₱100 OFF</h6>
-                                    <small class="text-muted">Min. spend ₱1000</small>
-                                </div>
-                                <i class="fas fa-check-circle text-success d-none" id="voucher-DISCOUNT100"></i>
-                            </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" onclick="applySelectedVoucher()">Apply Voucher</button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <script>
+                let selectedVoucher = null;
+
+                function selectVoucher(code, amount, minSpend) {
+                    // Reset all
+                    document.querySelectorAll('.voucher-card').forEach(card => card.classList.remove('active'));
+                    document.querySelectorAll('.fa-check-circle').forEach(icon => icon.classList.add('d-none'));
+
+                    // Highlight selected one
+                    event.currentTarget.classList.add('active');
+                    document.getElementById(`check-${code}`).classList.remove('d-none');
+
+                    // Save selected voucher
+                    selectedVoucher = {
+                        code,
+                        amount,
+                        minSpend
+                    };
+                }
+
+                function applySelectedVoucher() {
+                    if (!selectedVoucher) {
+                        alert("Please select a voucher first.");
+                        return;
+                    }
+
+                    const {
+                        code,
+                        amount,
+                        minSpend
+                    } = selectedVoucher;
+                    const previewArea = document.getElementById('voucherPreviewArea');
+                    const noVoucherText = document.getElementById('noVoucherText');
+                    if (noVoucherText) noVoucherText.remove();
+
+                    // Replace with a visible voucher card preview
+                    previewArea.innerHTML = `
+        <div class="voucher-card border rounded p-3 d-flex align-items-center justify-content-between bg-light">
+            <div>
+                <h6 class="mb-1 text-danger">${amount > 0 ? `₱${amount} OFF` : 'Free Shipping'}</h6>
+                <small class="text-muted">${minSpend > 0 ? `Min. spend ₱${minSpend}` : 'No minimum spend'}</small><br>
+                <span class="badge bg-danger mt-1">${code}</span>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="removeVoucher()">Remove</button>
+        </div>
+    `;
+
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('voucherModal'));
+                    modal.hide();
+                }
+
+                function removeVoucher() {
+                    selectedVoucher = null;
+                    const previewArea = document.getElementById('voucherPreviewArea');
+                    previewArea.innerHTML = `<p id="noVoucherText" class="text-muted mb-0">No voucher selected</p>`;
+                }
+            </script>
+
+            <style>
+                .voucher-card {
+                    transition: all 0.2s ease-in-out;
+                    cursor: pointer;
+                }
+
+                .voucher-card:hover {
+                    background: #fff5f5;
+                    transform: scale(1.01);
+                }
+
+                .voucher-card.active {
+                    border: 2px solid #dc3545 !important;
+                    background: #ffe6e6 !important;
+                    box-shadow: 0 0 8px rgba(220, 53, 69, 0.3);
+                }
+            </style>
+
+
             <!-- Trust Badges -->
             <div class="card mt-3">
                 <div class="card-body text-center">
-                    <h6 class="mb-3">Why Choose ElectroShop?</h6>
+                    <h6 class="mb-3">Why Choose Shophub?</h6>
                     <div class="row text-center">
                         <div class="col-4">
                             <i class="fas fa-shipping-fast text-primary mb-2" style="font-size: 1.5rem;"></i>
@@ -748,47 +864,115 @@ include 'includes/header.php';
                 const totalDisplay = document.getElementById('total-display');
                 const voucherDiscountInput = document.getElementById('voucher_discount');
                 const promoCodeInput = document.getElementById('promo_code');
+                const voucherPreviewArea = document.getElementById('voucherPreviewArea');
+                const noVoucherText = document.getElementById('noVoucherText');
+                const voucherModalEl = document.getElementById('voucherModal');
+                let selectedVoucher = null;
 
+                // 🧮 Update total calculation
                 function updateTotal() {
-                    const shipping = parseFloat(shippingInput.value) || 0;
-                    const voucherDiscount = parseFloat(voucherDiscountInput.value) || 0;
+                    const shipping = parseFloat(shippingInput?.value) || 0;
+                    const voucherDiscount = parseFloat(voucherDiscountInput?.value) || 0;
 
                     let total = subtotal + shipping - voucherDiscount;
                     if (total < 0) total = 0;
 
-                    totalDisplay.textContent = "₱" + total.toFixed(2);
-                    document.getElementById("total").value = total;
+                    if (totalDisplay) totalDisplay.textContent = "₱" + total.toFixed(2);
+                    const totalInput = document.getElementById("total");
+                    if (totalInput) totalInput.value = total;
                 }
 
-                window.applyVoucher = function(code, discount) {
-                    // Remove all check icons
-                    document.querySelectorAll('.voucher-card i').forEach(el => el.classList.add('d-none'));
+                // 🎟️ Select voucher in modal
+                window.selectVoucher = function(code, amount, minSpend) {
+                    document.querySelectorAll('.voucher-card').forEach(card => card.classList.remove('active'));
+                    document.querySelectorAll('.fa-check-circle').forEach(icon => icon.classList.add('d-none'));
 
-                    // Show selected check
-                    document.getElementById("voucher-" + code).classList.remove("d-none");
+                    event.currentTarget.classList.add('active');
+                    document.getElementById(`check-${code}`).classList.remove('d-none');
 
-                    // Update hidden inputs
-                    voucherDiscountInput.value = discount;
+                    selectedVoucher = {
+                        code,
+                        amount,
+                        minSpend
+                    };
+                };
+
+                // 🎟️ Apply selected voucher
+                window.applySelectedVoucher = function() {
+                    if (!selectedVoucher) {
+                        alert("Please select a voucher first.");
+                        return;
+                    }
+
+                    const {
+                        code,
+                        amount,
+                        minSpend
+                    } = selectedVoucher;
+                    const modal = bootstrap.Modal.getInstance(voucherModalEl);
+
+                    // Check min spend
+                    if (subtotal < minSpend) {
+                        alert(`This voucher requires a minimum spend of ₱${minSpend}.`);
+                        return;
+                    }
+
+                    // Apply effects
+                    if (code === 'FREESHIP') {
+                        shippingInput.value = 0; // Free shipping
+                        voucherDiscountInput.value = 0;
+                    } else {
+                        voucherDiscountInput.value = amount;
+                    }
                     promoCodeInput.value = code;
 
-                    // Update discount display
-                    const discountDisplay = document.querySelector(".summary-row .text-success");
-                    if (discountDisplay) discountDisplay.textContent = "-₱" + discount.toFixed(2);
+                    // Show applied voucher card
+                    voucherPreviewArea.innerHTML = `
+            <div class="voucher-card border rounded p-3 d-flex align-items-center justify-content-between bg-light">
+                <div>
+                    <h6 class="mb-1 ${code === 'FREESHIP' ? 'text-primary' : 'text-danger'}">
+                        ${code === 'FREESHIP' ? 'Free Shipping' : '₱' + amount + ' OFF'}
+                    </h6>
+                    <small class="text-muted">${minSpend > 0 ? 'Min. spend ₱' + minSpend : 'No minimum spend'}</small><br>
+                    <span class="badge bg-danger mt-1">${code}</span>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeVoucher()">Remove</button>
+            </div>
+        `;
+
+                    noVoucherText?.classList.add("d-none");
+                    updateTotal();
+                    modal.hide();
+                };
+
+                // 🗑️ Remove voucher
+                window.removeVoucher = function() {
+                    selectedVoucher = null;
+                    voucherDiscountInput.value = 0;
+                    promoCodeInput.value = "";
+                    voucherPreviewArea.innerHTML = `<p id="noVoucherText" class="text-muted mb-0">No voucher selected</p>`;
+
+                    // Restore shipping if free shipping was applied
+                    const defaultShipping = document.querySelector('input[name="shipping_option"]:checked')?.dataset.fee || 0;
+                    shippingInput.value = defaultShipping;
 
                     updateTotal();
-                }
+                };
 
-                // Update total when shipping changes
+                // 🚚 Update total when shipping changes
                 const shippingRadios = document.querySelectorAll('input[name="shipping_option"]');
                 shippingRadios.forEach(option => {
-                    option.addEventListener("change", updateTotal);
+                    option.addEventListener("change", function() {
+                        const value = this.dataset.fee ? parseFloat(this.dataset.fee) : 0;
+                        shippingInput.value = value;
+                        updateTotal();
+                    });
                 });
 
-                // Initial total
+                // 🧮 Initial total
                 updateTotal();
             });
         </script>
-
 
     </div>
 
@@ -798,20 +982,19 @@ include 'includes/header.php';
 </div>
 </div>
 <script>
-  document.querySelectorAll('.payment-method').forEach(method => {
-    method.addEventListener('click', () => {
-        // Remove highlight from all payment options
-        document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+    document.querySelectorAll('.payment-method').forEach(method => {
+        method.addEventListener('click', () => {
+            // Remove highlight from all payment options
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
 
-        // Highlight selected one
-        method.classList.add('selected');
+            // Highlight selected one
+            method.classList.add('selected');
 
-        // Update the hidden input with selected method
-        const selectedValue = method.querySelector('input[type="radio"]').value;
-        document.getElementById('payment_method').value = selectedValue;
+            // Update the hidden input with selected method
+            const selectedValue = method.querySelector('input[type="radio"]').value;
+            document.getElementById('payment_method').value = selectedValue;
+        });
     });
-});
-
 </script>
 <script>
     document.querySelector(".btn-outline-primary").addEventListener("click", function() {

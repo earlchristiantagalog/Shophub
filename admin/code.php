@@ -53,9 +53,17 @@ if (isset($_POST['update_admin'])) {
 
 // Login User
 if (isset($_POST['login'])) {
+    // Set timezone to GMT+8 (Philippine Time)
+    date_default_timezone_set('Asia/Manila');
+
     // Clean input
     $email = mysqli_real_escape_string($conn, $_POST['email']);
     $password = $_POST['password'];
+    if (isset($_POST['remember'])) {
+        setcookie('remember_email', $_POST['email'], time() + (86400 * 30), "/"); // 30 days
+    } else {
+        setcookie('remember_email', '', time() - 3600, "/");
+    }
 
     $sql = "SELECT * FROM admin WHERE email = ?";
     $stmt = $conn->prepare($sql);
@@ -66,14 +74,30 @@ if (isset($_POST['login'])) {
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
 
-        // Verify hashed password
+        // Verify password (use password_verify if you store hashed passwords)
         if ($password == $user['password']) {
             $_SESSION['admin_id'] = $user['id'];
             $_SESSION['admin_name'] = $user['full_name'];
             $_SESSION['email'] = $user['email'];
             $_SESSION['logged_in'] = true;
 
-            // Handle "Remember me"
+            // ✅ Attendance (once per day, GMT+8)
+            $admin_id = $user['id'];
+            $today = date('Y-m-d');
+            $now = date('Y-m-d H:i:s');
+
+            $check = $conn->prepare("SELECT id FROM admin_attendance WHERE admin_id = ? AND login_date = ?");
+            $check->bind_param("is", $admin_id, $today);
+            $check->execute();
+            $check->store_result();
+
+            if ($check->num_rows == 0) {
+                $insert = $conn->prepare("INSERT INTO admin_attendance (admin_id, login_date, login_time) VALUES (?, ?, ?)");
+                $insert->bind_param("iss", $admin_id, $today, $now);
+                $insert->execute();
+            }
+
+            // ✅ Remember Me (optional)
             if (isset($_POST['remember'])) {
                 setcookie("email", $email, time() + (86400 * 30), "/"); // 30 days
             }

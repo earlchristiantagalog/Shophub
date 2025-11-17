@@ -7,7 +7,6 @@ while ($row = $result->fetch_assoc()) {
         <td>{$row['code']}</td>
         <td>{$row['discount']}%</td>
         <td>{$row['expiry']}</td>
-        <td><span class='badge bg-success'>{$row['status']}</span></td>
         <td><button class='btn btn-sm btn-danger'>Delete</button></td>
     </tr>";
 }

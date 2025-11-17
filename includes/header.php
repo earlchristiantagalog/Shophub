@@ -9,724 +9,392 @@
     <link rel="shortcut icon" href="Shophub.png" type="image/x-icon">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .navbar-brand {
-            font-weight: bold;
-            color: var(--primary-orange) !important;
+</head>
+<style>
+    body {
+        background-color: hsla(0, 100%, 99%, 0.63);
+    }
+
+    :root {
+        --primary-color: #ee4d2d;
+        --secondary-color: #f5f5f5;
+        --text-color: #333;
+        --border-color: #e5e5e5;
+    }
+
+    body {
+        background-color: var(--secondary-color);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .navbar {
+        background-color: var(--primary-color);
+        padding: 1rem 0;
+    }
+
+    .navbar-brand {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white !important;
+    }
+
+    .checkout-header {
+        background: white;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 1rem;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .product-item {
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 0;
+    }
+
+    .product-item:last-child {
+        border-bottom: none;
+    }
+
+    .product-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+    .product-name {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .product-specs {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .price {
+        color: var(--primary-color);
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .original-price {
+        color: #999;
+        text-decoration: line-through;
+        font-size: 0.9rem;
+    }
+
+    .address-section {
+        background: #fff8f0;
+        border-left: 3px solid var(--primary-color);
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .shipping-option {
+        border: 1px solid var(--border-color);
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .shipping-option:hover {
+        border-color: var(--primary-color);
+    }
+
+    .shipping-option.selected {
+        border-color: var(--primary-color);
+        background-color: #fff8f0;
+    }
+
+    .payment-method {
+        border: 1px solid var(--border-color);
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .payment-method:hover {
+        border-color: var(--primary-color);
+    }
+
+    .payment-method.selected {
+        border-color: var(--primary-color);
+        background-color: #fff8f0;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        border-top: 1px solid var(--border-color);
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+
+    .btn-primary:hover {
+        background-color: #d63c1a;
+        border-color: #d63c1a;
+    }
+
+    .voucher-section {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+    }
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .quantity-btn {
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--border-color);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .quantity-input {
+        width: 50px;
+        text-align: center;
+        border: 1px solid var(--border-color);
+        height: 30px;
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding: 0 10px;
         }
 
-        .btn-primary {
-            background-color: var(--primary-orange);
-            border-color: var(--primary-orange);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--dark-orange);
-            border-color: var(--dark-orange);
-        }
-
-        .search-bar {
-            border: 2px solid var(--primary-orange);
-            border-radius: 25px;
-        }
-
-        .search-btn {
-            background-color: var(--primary-orange);
-            border: none;
-            border-radius: 0 25px 25px 0;
-        }
-
-        .category-item {
-            transition: transform 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .category-item:hover {
-            transform: translateY(-5px);
-            color: var(--primary-orange);
-        }
-
-        .product-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: none;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        .card-body {
+            padding: 1rem;
         }
 
         .product-image {
-            height: 200px;
-            object-fit: cover;
+            width: 60px;
+            height: 60px;
         }
 
-        .price {
-            color: var(--primary-orange);
-            font-weight: bold;
-            font-size: 1.2em;
+        .row.g-4 {
+            margin: 0;
         }
 
-        .original-price {
-            text-decoration: line-through;
-            color: #666;
-            font-size: 0.9em;
+        .col-md-8,
+        .col-md-4 {
+            padding: 0;
         }
+    }
 
-        .discount-badge {
-            background-color: var(--primary-orange);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 15px;
-            font-size: 0.8em;
-        }
+    .cart-badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background-color: #dc3545;
+        /* Bootstrap red */
+        color: white;
+        border-radius: 50%;
+        font-size: 0.7rem;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    }
 
-        .rating {
-            color: #ffc107;
-        }
+    .nav-link:hover .cart-badge {
+        transform: scale(1.1);
+        transition: transform 0.2s ease;
+    }
+</style>
 
-        .carousel-item img {
-            height: 400px;
-            object-fit: cover;
-        }
+<body>
+    <!-- ✅ LOADING SPINNER -->
+    <div id="loadingSpinner">
+        <div class="spinner-content text-center">
+            <img src="Shophub.png" alt="ShopHub Logo" class="spinner-logo mb-3">
+            <div class="spinner-border text-warning" role="status"></div>
+            <p class="mt-3 text-muted fw-semibold">Loading ShopHub...</p>
+        </div>
+    </div>
 
-        .footer {
-            background-color: #2c3e50;
-            color: white;
-            padding: 40px 0;
-        }
-
-        .footer h5 {
-            color: var(--primary-orange);
-            margin-bottom: 20px;
-        }
-
-        .footer a {
-            color: #ecf0f1;
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            color: var(--primary-orange);
-        }
-
-        .flash-sale {
-            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-        }
-
-        .countdown {
-            font-size: 1.5em;
-            font-weight: bold;
-        }
-
-        .badge-new {
-            background-color: #28a745;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.7em;
-        }
-
-        .social-icon {
-            color: var(--primary-orange);
-            font-size: 1.5em;
-            margin: 0 10px;
-            transition: transform 0.3s ease;
-        }
-
-        .social-icon:hover {
-            transform: scale(1.2);
-            color: var(--secondary-orange);
-        }
-
-        @media (max-width: 768px) {
-            .carousel-item img {
-                height: 250px;
-            }
-
-            .search-bar {
-                margin: 10px 0;
-            }
-        }
-    </style>
     <style>
-        /* Spinner Wrapper */
+        /* Fullscreen Background Overlay */
         #loadingSpinner {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.8);
+            background: radial-gradient(circle at center, #fff 0%, #f8f9fa 100%);
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
         }
 
-        /* Spinner Animation */
+        /* Hide smoothly */
+        #loadingSpinner.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Inner content alignment */
+        .spinner-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.6s ease;
+        }
+
+        /* Logo Animation */
+        .spinner-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        /* Spinner style */
         .spinner-border {
             width: 3rem;
             height: 3rem;
-        }
-    </style>
-    <style>
-        :root {
-            --primary-color: #ee4d2d;
-            --secondary-color: #f53d2d;
-            --accent-color: #ff6b35;
-            --text-dark: #333;
-            --text-light: #666;
-            --bg-light: #f8f9fa;
-            --border-color: #e0e0e0;
+            border-width: 4px;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text-dark);
-            background-color: var(--bg-light);
+        /* Subtle fade animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        /* Pulse animation for logo */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.85;
+            }
         }
 
-        .breadcrumb {
-            background: transparent;
-            padding: 0.5rem 0;
-            margin-bottom: 1rem;
-        }
-
-        .breadcrumb-item a {
-            color: var(--text-light);
-            text-decoration: none;
-        }
-
-        .product-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            margin-bottom: 2rem;
-        }
-
-        .product-image {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .main-image {
-            width: 100%;
-            height: 400px;
-            object-fit: cover;
-            cursor: zoom-in;
-            transition: transform 0.3s ease;
-        }
-
-        .main-image:hover {
-            transform: scale(1.05);
-        }
-
-        .thumbnail-container {
-            display: flex;
-            gap: 10px;
-            margin-top: 1rem;
-            overflow-x: auto;
-        }
-
-        .thumbnail {
-            width: 80px;
-            height: 80px;
-            border: 2px solid transparent;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: border-color 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .thumbnail:hover,
-        .thumbnail.active {
-            border-color: var(--primary-color);
-        }
-
-        .price-section {
-            background: linear-gradient(135deg, #fff5f5, #ffe8e8);
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-        }
-
-        .current-price {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .original-price {
-            font-size: 1.1rem;
-            color: var(--text-light);
-            text-decoration: line-through;
-        }
-
-        .discount-badge {
-            background: var(--primary-color);
-            color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            margin-left: 0.5rem;
-        }
-
-        .rating-section {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .stars {
-            color: #ffc107;
-        }
-
-        .variant-selector {
-            margin-bottom: 1.5rem;
-        }
-
-        .variant-option {
-            border: 2px solid var(--border-color);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-            display: inline-block;
-        }
-
-        .variant-option:hover,
-        .variant-option.active {
-            border-color: var(--primary-color);
-            background-color: #fff5f5;
-        }
-
-        .quantity-selector {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .quantity-btn {
-            width: 40px;
-            height: 40px;
-            border: 1px solid var(--border-color);
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .quantity-btn:hover {
-            background-color: var(--bg-light);
-        }
-
-        .quantity-input {
-            width: 60px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            height: 40px;
-            border-radius: 4px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .btn-add-cart {
-            background: linear-gradient(135deg, #ffa726, #ff9800);
-            border: none;
-            color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 4px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            flex: 1;
-        }
-
-        .btn-add-cart:hover {
-            background: linear-gradient(135deg, #ff9800, #f57c00);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
-        }
-
-        .btn-buy-now {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border: none;
-            color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 4px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            flex: 1;
-        }
-
-        .btn-buy-now:hover {
-            background: linear-gradient(135deg, var(--secondary-color), #d32f2f);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(238, 77, 45, 0.3);
-        }
-
-
-
-        .product-details {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .detail-row {
-            display: flex;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .detail-label {
-            width: 30%;
-            color: var(--text-light);
-            font-weight: 500;
-        }
-
-        .detail-value {
-            width: 70%;
-            color: var(--text-dark);
-        }
-
-        .shipping-info {
-            background: #f8f9ff;
-            border-left: 4px solid var(--primary-color);
-            padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-        }
-
-        .feature-badge {
-            background: var(--primary-color);
-            color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            margin-right: 0.5rem;
-        }
-
+        /* Mobile adjustments */
         @media (max-width: 768px) {
-            .current-price {
-                font-size: 1.5rem;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .main-image {
-                height: 300px;
-            }
-
-            .detail-row {
-                flex-direction: column;
-            }
-
-            .detail-label,
-            .detail-value {
-                width: 100%;
-            }
-        }
-    </style>
-    <style>
-        :root {
-            --primary-color: #ee4d2d;
-            --secondary-color: #f5f5f5;
-            --text-color: #333;
-            --border-color: #e5e5e5;
-        }
-
-        body {
-            background-color: var(--secondary-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .navbar {
-            background-color: var(--primary-color);
-            padding: 1rem 0;
-        }
-
-        .navbar-brand {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: white !important;
-        }
-
-        .checkout-header {
-            background: white;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 1rem;
-        }
-
-        .card {
-            border: none;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1rem;
-        }
-
-        .card-header {
-            background: white;
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 1.5rem;
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .product-item {
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 0;
-        }
-
-        .product-item:last-child {
-            border-bottom: none;
-        }
-
-        .product-image {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 5px;
-        }
-
-        .product-name {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        .product-specs {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .price {
-            color: var(--primary-color);
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .original-price {
-            color: #999;
-            text-decoration: line-through;
-            font-size: 0.9rem;
-        }
-
-        .address-section {
-            background: #fff8f0;
-            border-left: 3px solid var(--primary-color);
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .shipping-option {
-            border: 1px solid var(--border-color);
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .shipping-option:hover {
-            border-color: var(--primary-color);
-        }
-
-        .shipping-option.selected {
-            border-color: var(--primary-color);
-            background-color: #fff8f0;
-        }
-
-        .payment-method {
-            border: 1px solid var(--border-color);
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .payment-method:hover {
-            border-color: var(--primary-color);
-        }
-
-        .payment-method.selected {
-            border-color: var(--primary-color);
-            background-color: #fff8f0;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            border-top: 1px solid var(--border-color);
-            padding-top: 1rem;
-            margin-top: 1rem;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            padding: 0.75rem 2rem;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-
-        .btn-primary:hover {
-            background-color: #d63c1a;
-            border-color: #d63c1a;
-        }
-
-        .voucher-section {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-        }
-
-        .quantity-control {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .quantity-btn {
-            width: 30px;
-            height: 30px;
-            border: 1px solid var(--border-color);
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .quantity-input {
-            width: 50px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            height: 30px;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 10px;
-            }
-
-            .card-body {
-                padding: 1rem;
-            }
-
-            .product-image {
+            .spinner-logo {
                 width: 60px;
                 height: 60px;
             }
 
-            .row.g-4 {
-                margin: 0;
+            .spinner-border {
+                width: 2.5rem;
+                height: 2.5rem;
             }
 
-            .col-md-8,
-            .col-md-4 {
-                padding: 0;
+            .spinner-content p {
+                font-size: 0.9rem;
             }
-        }
-
-        .cart-badge {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background-color: #dc3545;
-            /* Bootstrap red */
-            color: white;
-            border-radius: 50%;
-            font-size: 0.7rem;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
-        }
-
-        .nav-link:hover .cart-badge {
-            transform: scale(1.1);
-            transition: transform 0.2s ease;
         }
     </style>
-</head>
 
-<body>
-    <div id="loadingSpinner">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
+    <script>
+        // Hide the spinner smoothly after page load
+        window.addEventListener("load", function() {
+            const spinner = document.getElementById("loadingSpinner");
+            if (spinner) {
+                spinner.classList.add("hidden");
+                setTimeout(() => spinner.remove(), 500); // fully remove after fade
+            }
+        });
+    </script>
 
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+
+    <!-- ✅ MODERN HEADER -->
+    <nav class="navbar navbar-expand-lg navbar-dark py-3 shadow-sm sticky-top" style="background: linear-gradient(135deg, #ee4d2d, #ff7043);">
         <div class="container">
+            <!-- Logo -->
             <a class="navbar-brand d-flex align-items-center" href="./">
                 <img src="Shophub.png" alt="ShopHub Logo"
-                    style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
-                <span style="font-weight: bold; font-size: 1.5rem; letter-spacing: 1px;">
-                    ShopHub
-                </span>
+                    class="me-2" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+                <span class="fw-bold fs-4 text-white">ShopHub</span>
             </a>
 
+            <!-- Mobile toggle -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+                <i class="fas fa-bars text-white"></i>
             </button>
 
+            <!-- Navigation content -->
             <div class="collapse navbar-collapse" id="navbarNav">
-                <div class="mx-auto col-lg-6">
-                    <form action="index.php" method="GET">
-                        <div class="input-group">
-                            <input type="text" name="query" class="form-control search-bar" placeholder="Search for electronics..." required>
-                            <button type="submit" class="btn btn-primary search-btn"><i class="fas fa-search"></i></button>
-                        </div>
+                <!-- Search -->
+                <div class="mx-auto col-lg-6 mt-3 mt-lg-0">
+                    <form action="index.php" method="GET" class="d-flex">
+                        <input type="text" name="query" class="form-control rounded-start-pill border-0 px-3"
+                            placeholder="Search products..." required>
+                        <button type="submit" class="btn btn-light rounded-end-pill px-4">
+                            <i class="fas fa-search text-danger"></i>
+                        </button>
                     </form>
                 </div>
 
-
-                <ul class="navbar-nav ms-auto">
+                <!-- Icons -->
+                <ul class="navbar-nav ms-auto align-items-center mt-3 mt-lg-0">
                     <?php
 
                     // If you store cart items in session
@@ -741,38 +409,67 @@
                     $cart_count = $row['count'];
 
                     ?>
-                    <li class="nav-item position-relative">
-                        <a class="nav-link" href="cart.php" style="position: relative;">
+                    <!-- Cart -->
+                    <li class="nav-item position-relative me-3">
+                        <a class="nav-link text-white position-relative" href="cart.php">
                             <i class="fas fa-shopping-cart fa-lg"></i>
                             <?php if ($cart_count > 0): ?>
                                 <span class="cart-badge"><?= $cart_count ?></span>
                             <?php endif; ?>
                         </a>
                     </li>
-                    <?php
-                    if (isset($_SESSION['auth'])) {
-                    ?>
+
+                    <!-- User -->
+                    <?php if (isset($_SESSION['auth'])): ?>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user"></i> <?php echo htmlspecialchars($_SESSION['username']); ?>
+                            <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i> <?= htmlspecialchars($_SESSION['username']); ?>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="profile.php">My Profile</a></li>
-                                <li><a class="dropdown-item" href="my_purchases.php">My Purchases</a></li>
-                                <li><a class="dropdown-item" href="logout.php">Logout</a></li>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li><a class="dropdown-item" href="profile.php"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                                <li><a class="dropdown-item" href="my_purchases.php"><i class="fas fa-box me-2"></i>My Purchases</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item text-danger" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                             </ul>
                         </li>
-                    <?php
-                    } else {
-                    ?>
+                    <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="login.php"><i class="fas fa-user"></i> Login</a>
+                            <a class="btn btn-light text-danger fw-semibold px-4 ms-2" href="login.php">
+                                <i class="fas fa-user me-1"></i> Login
+                            </a>
                         </li>
-                    <?php
-                    }
-                    ?>
-
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
     </nav>
+
+    <style>
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background-color: #ffc107;
+            color: #000;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .navbar-toggler {
+            border: none;
+            outline: none;
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+    </style>

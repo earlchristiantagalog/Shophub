@@ -181,6 +181,7 @@ if (isset($_GET['order_id'])) {
         <div class="mt-4">
             <h6 class="section-title">Order Information</h6>
             <p><strong>Order ID:</strong> <?= htmlspecialchars($order['order_id']) ?></p>
+            <p><strong>Shipping Method:</strong> <?= htmlspecialchars($order['shipping_method']) ?></p>
             <p><strong>Date:</strong> <?= date('F d, Y h:i A', strtotime($order['order_date'])) ?></p>
             <p><strong>Total:</strong> ₱<?= number_format($order['total'], 2) ?></p>
             <p><strong>Status:</strong>

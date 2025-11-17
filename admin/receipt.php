@@ -1,16 +1,15 @@
 <?php
-require '../includes/db.php'; // adjust path to your db.php
-require 'vendor/autoload.php'; // Include Composer's autoloader
+require '../includes/db.php';
+require 'vendor/autoload.php';
 
-// Make sure there's no whitespace or echo before this line.
 if (!isset($_GET['order_id'])) die('No order specified.');
-$order_id = intval($_GET['order_id']);
+$order_id = $_GET['order_id'];
 
-// Fetch order info from the database
+/* 🧩 Fetch Order Details */
 $stmt = $conn->prepare("
     SELECT o.order_id, o.total, o.status, o.order_date, o.payment_method, o.shipping_method,
            oi.quantity, o.shipping_fee,
-           u.username, u.phone,
+          a.first_name, a.last_name, u.phone,
            a.address_line_1, a.barangay, a.city, a.province, a.region, a.zip_code
     FROM orders o
     JOIN users u ON o.user_id = u.id
@@ -18,330 +17,273 @@ $stmt = $conn->prepare("
     JOIN order_items oi ON o.order_id = oi.order_id
     WHERE o.order_id = ?
 ");
-$stmt->bind_param("i", $order_id);
+$stmt->bind_param("s", $order_id);
 $stmt->execute();
-$orderResult = $stmt->get_result();
-if ($orderResult->num_rows === 0) die('Order not found.');
-$order = $orderResult->fetch_assoc();
+$result = $stmt->get_result();
+if ($result->num_rows === 0) die('Order not found.');
+$order = $result->fetch_assoc();
 $stmt->close();
 
-// Seller Info
+/* 🧩 Fetch Tracking Number */
+$track_stmt = $conn->prepare("SELECT tracking_number FROM tracking WHERE order_id = ? LIMIT 1");
+$track_stmt->bind_param("s", $order_id);
+$track_stmt->execute();
+$track_result = $track_stmt->get_result();
+$tracking_number = $track_result->num_rows > 0 ? $track_result->fetch_assoc()['tracking_number'] : 'PENDING';
+$track_stmt->close();
+
+/* 🧩 Seller Info */
 $seller_name = "Shophub";
-$seller_phone = '09940823693';
+$seller_phone = "09940823693";
 $seller_address = "Malunhaw St. Barangay Pulpogan, Consolacion, Cebu";
 
-// TCPDF setup
-$pdf = new TCPDF();
-
-// Set document information
-$pdf->SetCreator(PDF_CREATOR);
-$pdf->SetAuthor('Shophub');
-$pdf->SetTitle('Waybill Receipt');
-$pdf->SetSubject('Waybill for Order #' . $order['order_id']);
-
-// Add a page
-$pdf->AddPage();
-
-// Set font
-$pdf->SetFont('helvetica', '', 12);
-
-// Title
-$pdf->SetFont('helvetica', 'B', 16);
-$pdf->Cell(0, 10, 'Waybill Receipt', 0, 1, 'C');
-$pdf->SetFont('helvetica', '', 12);
-
-// Shipping method
-$pdf->Cell(0, 10, 'Shipping Method: ' . $order['shipping_method'], 0, 1, 'C');
-
-// Waybill Number
-$pdf->Ln(5);
-$pdf->Cell(0, 10, 'Order No.: ' . $order['order_id'], 0, 1, 'C');
-
-// Sender Information
-$pdf->Ln(10);
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->Cell(0, 10, 'Sender Information', 0, 1, 'L');
-$pdf->SetFont('helvetica', '', 12);
-$pdf->Cell(0, 10, 'Name: ' . $seller_name, 0, 1, 'L');
-$pdf->Cell(0, 10, 'Phone: ' . $seller_phone, 0, 1, 'L');
-$pdf->Cell(0, 10, 'Address: ' . $seller_address, 0, 1, 'L');
-
-// Recipient Information
-$pdf->Ln(10);
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->Cell(0, 10, 'Recipient Information', 0, 1, 'L');
-$pdf->SetFont('helvetica', '', 12);
-$pdf->Cell(0, 10, 'Name: ' . $order['username'], 0, 1, 'L');
-$pdf->Cell(0, 10, 'Phone: ' . $order['phone'], 0, 1, 'L');
-$pdf->Cell(0, 10, 'Address: ' . $order['address_line_1'] . ', ' . $order['barangay'] . ', ' . $order['city'] . ', ' . $order['province'] . ', ' . $order['region'] . ', ' . $order['zip_code'], 0, 1, 'L');
-
-// Package Details
-$pdf->Ln(10);
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->Cell(0, 10, 'Package Details', 0, 1, 'L');
-$pdf->SetFont('helvetica', '', 12);
-$pdf->Cell(0, 10, 'Shipping Fee: ₱' . number_format($order['shipping_fee'], 2), 0, 1, 'L');
-$pdf->Cell(0, 10, 'Order Date: ' . date('F d, Y', strtotime($order['order_date'])), 0, 1, 'L');
-$pdf->Cell(0, 10, 'Estimated Delivery: ' . date('F d, Y', strtotime($order['order_date'] . ' +2 days')), 0, 1, 'L');
-
-// Terms and Conditions
-$pdf->Ln(10);
-$pdf->SetFont('helvetica', 'I', 10);
-$pdf->MultiCell(0, 10, "Terms & Conditions:\nSubject to carrier's terms and conditions.\nFor inquiries: support@expressdelivery.ph", 0, 'L');
-
-// Output the PDF to browser
-$pdf->Output('waybill_receipt_' . $order['order_id'] . '.pdf', 'I');
-
-// Clear output buffer
-ob_clean();
-flush();
+/* 🧩 Delivery ETA Function */
+function getEstimatedDelivery($method, $date)
+{
+    $method = strtolower(trim($method));
+    switch ($method) {
+        case 'standard':
+        case 'standard delivery':
+            return date('M d', strtotime($date . ' +3 days')) . '–' . date('d', strtotime($date . ' +5 days'));
+        case 'express':
+        case 'express delivery':
+            return date('M d', strtotime($date . ' +2 days'));
+        default:
+            return "N/A";
+    }
+}
+$estimated = getEstimatedDelivery($order['shipping_method'], $order['order_date']);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waybill Receipt</title>
+    <title>Waybill - <?= htmlspecialchars($order['order_id']) ?></title>
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+        @page {
+    size: A6 portrait;
+    margin: 0;
+}
 
-        .container {
-            background-color: #fff;
-            width: 100%;
-            max-width: 800px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
+html, body {
+    width: 105mm;
+    height: 148mm;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    font-family: 'Arial', sans-serif;
+}
 
-        .header {
-            background-color: #667eea;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 10px 10px 0 0;
-        }
+body {
+    display: flex;
+    justify-content: center;
+}
 
-        .header h1 {
-            margin: 0;
-        }
+.waybill {
+    width: 100%;
+    height: 100%;
+    border: 1.2px solid #000;
+    padding: 6px 8px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
 
-        .section {
-            margin: 20px 0;
-        }
+/* HEADER */
+.courier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1.2px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+}
 
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
+.courier-header .logo {
+    font-size: 16px;
+    font-weight: 900;
+    color: #d32f2f;
+}
 
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
+.courier-header .route {
+    font-size: 9px;
+    text-align: right;
+}
 
-        .info-box {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-        }
+/* BARCODE */
+.barcode-box {
+    text-align: center;
+    border-bottom: 1.2px solid #000;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+}
 
-        .info-box label {
-            font-size: 12px;
-            font-weight: bold;
-            color: #666;
-        }
+.barcode-box img {
+    width: 100%;
+    max-width: 230px;
+    height: 60px;
+}
 
-        .info-box p {
-            font-size: 14px;
-            color: #333;
-        }
+.tracking-number {
+    font-size: 16px;
+    font-weight: bold;
+}
 
-        .waybill-number {
-            text-align: center;
-            background-color: #f8f9fa;
-            padding: 15px;
-            margin-bottom: 20px;
-            font-size: 18px;
-        }
+.order-id {
+    font-size: 11px;
+}
 
-        .footer {
-            background-color: #f8f9fa;
-            text-align: center;
-            padding: 15px;
-            font-size: 12px;
-            color: #666;
-            margin-top: 20px;
-            border-radius: 0 0 10px 10px;
-        }
+/* SECTION TITLE */
+.section-title {
+    font-weight: bold;
+    font-size: 12px;
+    background: #000;
+    color: #fff;
+    padding: 3px 5px;
+}
 
-        .barcode {
-            text-align: center;
-            margin-top: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 20px;
-            letter-spacing: 2px;
-            color: #333;
-        }
+/* BOX CONTAINER */
+.section-box {
+    border: 1px solid #000;
+    padding: 6px;
+    margin-bottom: 8px;
+}
 
-        .pdf-button {
-            display: block;
-            background-color: #667eea;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            margin: 20px 0;
-            cursor: pointer;
-            text-decoration: none;
-        }
+/* INFO TEXT (BIGGER) */
+.info {
+    font-size: 11px;
+    line-height: 1.4;
+}
 
-        .pdf-button:hover {
-            background-color: #5560b2;
-        }
+/* GRID (BIGGER TEXT) */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 10px;
+    font-size: 11px;
+}
 
-        /* Dashed line style for Package Details */
-        .dashed-line {
-            border-top: 2px dashed #667eea;
-            margin: 20px 0;
-        }
+/* FOOTER */
+.bottom {
+    border-top: 1px solid #000;
+    margin-top: auto;
+    padding-top: 4px;
+    font-size: 9px;
+}
 
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
+/* Hide button on print */
+@media print {
+    .pdf-button {
+        display: none;
+    }
+}
 
-            .container {
-                box-shadow: none;
-                max-width: 100%;
-            }
-        }
+.pdf-button {
+    display: block;
+    background: black;
+    color: white;
+    border-radius: 4px;
+    padding: 6px;
+    text-align: center;
+    font-size: 11px;
+    margin-top: 6px;
+}
+
     </style>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
-    <div class="container" id="content">
-        <div class="header">
-            <h1>Waybill Receipt</h1>
-            <p><?= htmlspecialchars($order['shipping_method']) ?> Delivery</p>
-        </div>
+    <div class="waybill" id="content">
 
-        <div class="waybill-number">
-            <strong>Order ID:</strong><?= $order['order_id'] ?>
-        </div>
-
-        <div class="section">
-            <div class="section-title">Sender Information</div>
-            <div class="info-grid">
-                <div class="info-box">
-                    <label>Name</label>
-                    <p><?= htmlspecialchars($seller_name) ?></p>
-                </div>
-                <div class="info-box">
-                    <label>Phone</label>
-                    <p><?= htmlspecialchars($seller_phone) ?></p>
-                </div>
-                <div class="info-box" style="grid-column: span 2;">
-                    <label>Address</label>
-                    <p><?= htmlspecialchars($seller_address) ?></p>
-                </div>
+        <!-- HEADER -->
+        <div class="courier-header">
+            <div class="logo">Shophub Express</div>
+            <div class="route">
+                RTS Code: SHB-C254-BNA-03-02<br>
+                Region: CEB-BN
             </div>
         </div>
 
-        <div class="section">
-            <div class="section-title">Recipient Information</div>
-            <div class="info-grid">
-                <div class="info-box">
-                    <label>Name</label>
-                    <p><?= htmlspecialchars($order['username']) ?></p>
-                </div>
-                <div class="info-box">
-                    <label>Phone</label>
-                    <p><?= htmlspecialchars($order['phone']) ?></p>
-                </div>
-                <div class="info-box" style="grid-column: span 2;">
-                    <label>Address</label>
-                    <p><?= htmlspecialchars($order['address_line_1'] . ', ' . $order['barangay'] . ', ' . $order['city'] . ', ' . $order['province'] . ', ' . $order['region'] . ', ' . $order['zip_code']) ?></p>
-                </div>
-            </div>
+        <!-- BARCODE -->
+        <div class="barcode-box">
+            <img src="barcode.php?code=<?= urlencode($tracking_number) ?>" alt="Barcode">
+            <div class="tracking-number"><?= htmlspecialchars($tracking_number) ?></div>
+            <div class="order-id">Order ID: <?= htmlspecialchars($order['order_id']) ?></div>
         </div>
 
-        <div class="dashed-line"></div>
+        <div class="section-box">
+    <div class="section-title">SHIP TO</div>
+    <div class="info">
+        <strong><?= htmlspecialchars($order['first_name'] . ' ' . $order['last_name']) ?></strong><br>
+        <?= htmlspecialchars($order['address_line_1']) ?>, <?= htmlspecialchars($order['barangay']) ?>,
+        <?= htmlspecialchars($order['city']) ?>, <?= htmlspecialchars($order['province']) ?><br>
+        <?= htmlspecialchars($order['region']) ?> <?= htmlspecialchars($order['zip_code']) ?><br>
+        📞 <?= htmlspecialchars($order['phone']) ?>
+    </div>
+</div>
 
-        <div class="section">
-            <div class="section-title">Package Details</div>
-            <div class="info-grid">
-                <div class="info-box">
-                    <label>Shipping Method</label>
-                    <p><?= htmlspecialchars($order['shipping_method']) ?></p>
-                </div>
-                <div class="info-box">
-                    <label>Shipping Fee</label>
-                    <p>₱<?= number_format($order['shipping_fee'], 2) ?></p>
-                </div>
-                <div class="info-box">
-                    <label>Order Date</label>
-                    <p><?= date('F d, Y', strtotime($order['order_date'])) ?></p>
-                </div>
-                <div class="info-box">
-                    <label>Estimated Delivery</label>
-                    <p><?= date('F d, Y', strtotime($order['order_date'] . ' +2 days')) ?></p>
-                </div>
-            </div>
+
+        <div class="section-box">
+    <div class="section-title">SHIP FROM</div>
+    <div class="info">
+        <strong><?= htmlspecialchars($seller_name) ?></strong><br>
+        <?= htmlspecialchars($seller_address) ?><br>
+        📞 <?= htmlspecialchars($seller_phone) ?>
+    </div>
+</div>
+
+
+        <div class="section-box">
+    <div class="section-title">DETAILS</div>
+    <div class="grid">
+        <div><strong>Method:</strong> <?= htmlspecialchars($order['shipping_method']) ?></div>
+        <div><strong>Date:</strong> <?= date('M d, Y', strtotime($order['order_date'])) ?></div>
+        <div><strong>Amount:</strong> ₱<?= number_format($order['total'], 2) ?></div>
+        <div><strong>ETA:</strong> <?= htmlspecialchars($estimated) ?></div>
+    </div>
+</div>
+
+
+        <!-- FOOTER -->
+        <div class="bottom">
+            <strong>Shophub Express</strong> • Waybill for delivery<br>
         </div>
 
-        <div class="barcode">
-            <p>WB<?= $order['order_id'] ?></p>
-        </div>
-
-        <div class="footer">
-            <p><strong>Terms & Conditions:</strong> Subject to carrier's terms and conditions.</p>
-            <p>For inquiries: support@expressdelivery.ph</p>
-        </div>
-
-        <!-- Updated Download PDF Button -->
-        <a href="#" class="pdf-button" id="downloadBtn" data-order-id="<?= $order['order_id'] ?>">Download PDF</a>
+        <a href="#" class="pdf-button" id="downloadBtn" data-order-id="<?= htmlspecialchars($order['order_id']) ?>">Download PDF</a>
     </div>
 
+    <!-- JS FOR PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        document.getElementById('downloadBtn').addEventListener('click', function(event) {
-            event.preventDefault();
-            const orderId = this.getAttribute('data-order-id');
-            const {
-                jsPDF
-            } = window.jspdf;
-            const doc = new jsPDF();
+        document.getElementById("downloadBtn").addEventListener("click", async function(e) {
+            e.preventDefault();
 
-            // Use jsPDF's html method to capture and render the content into the PDF
-            doc.html(document.getElementById('content'), {
-                callback: function(doc) {
-                    doc.save(`waybill_receipt_${orderId}.pdf`);
-                },
-                margin: [10, 10, 10, 10],
-                x: 10,
-                y: 10
+            const btn = this;
+            btn.style.display = "none";
+
+            const content = document.getElementById("content");
+            const { jsPDF } = window.jspdf;
+
+            const canvas = await html2canvas(content, { scale: 3, useCORS: true });
+            const imgData = canvas.toDataURL("image/png");
+
+            const pdf = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: [105, 148]
             });
+
+            pdf.addImage(imgData, "PNG", 0, 0, 105, 148);
+            pdf.save(`Waybill_${btn.dataset.orderId}.pdf`);
+
+            setTimeout(() => btn.style.display = "block", 600);
         });
     </script>
+
 </body>
 
 </html>

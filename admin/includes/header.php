@@ -24,7 +24,7 @@ $adminName = $_SESSION['admin_name'] ?? 'Admin'; // Make sure this session is se
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Shopee-Style Admin Dashboard</title>
+    <title>Shophub</title>
     <!-- CSS -->
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.14.0/build/css/alertify.min.css" />
     <!-- Bootstrap theme -->
@@ -381,18 +381,31 @@ $adminName = $_SESSION['admin_name'] ?? 'Admin'; // Make sure this session is se
 </head>
 
 <body>
-
+<?php 
+$pageName = substr($_SERVER['SCRIPT_NAME'], strrpos($_SERVER['SCRIPT_NAME'], '/') + 1);
+?>
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
             <nav class="col-md-2 d-none d-md-block sidebar py-4 px-3">
                 <h4 class="text-white mb-4"><i class="bi bi-shop"></i> ShopHub</h4>
                 <ul class="nav flex-column">
-                    <li class="nav-item mb-2"><a class="nav-link text-white active" href="./"><i class="bi bi-house"></i> Dashboard</a></li>
-                    <li class="nav-item mb-2"><a class="nav-link text-white" href="products.php"><i class="bi bi-box-seam"></i> Products</a></li>
-                    <li class="nav-item mb-2"><a class="nav-link text-white" href="orders.php"><i class="bi bi-cart-check"></i> Orders</a></li>
-                    <li class="nav-item mb-2"><a class="nav-link text-white" href="customers.php"><i class="bi bi-people"></i> Customers</a></li>
-                    <li class="nav-item mb-2"><a class="nav-link text-white" href="admin.php"><i class="bi bi-person"></i> Admin</a></li>
-                    <li class="nav-item mb-2"><a class="nav-link text-white" href="settings.php"><i class="bi bi-gear"></i> Settings</a></li>
+                    <li class="nav-item mb-2"><a class="nav-link text-white 
+                    <?= $pageName == 'index.php' ? 'active':''; ?>" href="./"><i class="bi bi-house"></i> Dashboard</a></li>
+                    <li class="nav-item mb-2"><a class="nav-link text-white <?= $pageName == 'products.php' ? 'active':''; ?>" href="products.php"><i class="bi bi-box-seam"></i> Products</a></li>
+                    <li class="nav-item mb-2"><a class="nav-link text-white <?= $pageName == 'orders.php' ? 'active':''; ?>" href="orders.php"><i class="bi bi-cart-check"></i> Orders</a></li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link <?= $pageName == 'tracking.php' ? 'active':''; ?>" href="tracking.php">
+                            <i class="bi bi-truck"></i> Tracking
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link <?= $pageName == 'completed_order.php' ? 'active':''; ?>" href="completed_order.php">
+                            <i class="bi bi-check2-circle"></i> Completed
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2"><a class="nav-link text-white <?= $pageName == 'customers.php' ? 'active':''; ?>" href="customers.php"><i class="bi bi-people"></i> Customers</a></li>
+                    <li class="nav-item mb-2"><a class="nav-link text-white <?= $pageName == 'admin.php' ? 'active':''; ?>" href="admin.php"><i class="bi bi-person"></i> Admin</a></li>
+                    <li class="nav-item mb-2"><a class="nav-link text-white <?= $pageName == 'settings.php' ? 'active':''; ?>" href="settings.php"><i class="bi bi-gear"></i> Settings</a></li>
                 </ul>
             </nav>

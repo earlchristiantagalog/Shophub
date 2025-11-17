@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 24, 2025 at 03:31 PM
+-- Generation Time: Nov 09, 2025 at 01:56 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -47,9 +47,7 @@ CREATE TABLE `addresses` (
 --
 
 INSERT INTO `addresses` (`address_id`, `user_id`, `first_name`, `last_name`, `phone`, `address_line_1`, `barangay`, `city`, `province`, `region`, `zip_code`, `is_default`) VALUES
-(5, 4, 'Earl Christian', 'Tagalog', '09168218393', 'adsadasdsad\r\nsadsadsadsadsadsda', 'Pulpogan', 'manila', 'Texas', 'Luzon', '4555', 1),
-(9, 9, 'Earl Christian', 'Tagalog', '099234567890', 'Malunhaw', 'Pulpogan', 'Consolacion', 'Cebu', 'Central Visayas', '6001', 1),
-(10, 10, 'Earl Christian', 'Tagalog', '099234567890', 'asdasdsdsd', 'Tejero', 'City of Cebu', 'Cebu', 'Central Visayas', '6001', 1);
+(11, 12, 'Earl Christian', 'Tagalog', '099234567890', 'District 4 Malunhaw', 'Pulpogan', 'Consolacion', 'Cebu', 'Central Visayas', '6001', 1);
 
 -- --------------------------------------------------------
 
@@ -72,7 +70,33 @@ CREATE TABLE `admin` (
 
 INSERT INTO `admin` (`id`, `admin_id`, `full_name`, `email`, `password`, `created_at`) VALUES
 (2, '782346-617461', 'Admin Test', 'lirafren30@gmail.com', '12345678', '2025-07-05 07:42:57'),
-(3, '323158-930082', 'Earl Christian Tagalog', 'earlchristiantagalog10@gmail.com', '1234567890', '2025-07-05 16:56:09');
+(3, '323158-930082', 'Earl Christian Tagalog', 'earlchristiantagalog10@gmail.com', '', '2025-07-05 16:56:09');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_attendance`
+--
+
+CREATE TABLE `admin_attendance` (
+  `id` int(11) NOT NULL,
+  `admin_id` int(11) NOT NULL,
+  `login_date` date NOT NULL,
+  `login_time` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admin_attendance`
+--
+
+INSERT INTO `admin_attendance` (`id`, `admin_id`, `login_date`, `login_time`) VALUES
+(1, 3, '2025-10-25', '2025-10-25 16:15:14'),
+(2, 3, '2025-10-26', '2025-10-26 22:20:36'),
+(3, 3, '2025-10-27', '2025-10-27 18:10:52'),
+(4, 3, '2025-10-29', '2025-10-29 08:49:17'),
+(5, 3, '2025-10-31', '2025-10-31 08:01:41'),
+(6, 2, '2025-10-31', '2025-10-31 10:11:29'),
+(7, 2, '2025-11-01', '2025-11-01 13:15:58');
 
 -- --------------------------------------------------------
 
@@ -123,20 +147,30 @@ CREATE TABLE `categories` (
 --
 
 INSERT INTO `categories` (`id`, `name`, `created_at`) VALUES
-(4, 'PC', '2025-08-06 01:49:53');
+(5, 'PC', '2025-10-31 02:24:25'),
+(6, 'School Supplies', '2025-10-31 02:25:09');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `delivery_receipts`
+-- Table structure for table `flash_sale`
 --
 
-CREATE TABLE `delivery_receipts` (
+CREATE TABLE `flash_sale` (
   `id` int(11) NOT NULL,
-  `receipt_id` varchar(20) NOT NULL,
-  `order_id` varchar(20) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp()
+  `title` varchar(255) DEFAULT NULL,
+  `discount` int(11) DEFAULT NULL,
+  `start_time` datetime DEFAULT NULL,
+  `end_time` datetime DEFAULT NULL,
+  `status` enum('upcoming','active','ended') DEFAULT 'upcoming'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `flash_sale`
+--
+
+INSERT INTO `flash_sale` (`id`, `title`, `discount`, `start_time`, `end_time`, `status`) VALUES
+(9, 'Halloween Mega Sale', 70, '2025-10-31 15:15:00', '2025-11-04 15:35:00', 'active');
 
 -- --------------------------------------------------------
 
@@ -171,17 +205,17 @@ CREATE TABLE `orders` (
   `order_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `subtotal` decimal(10,2) NOT NULL DEFAULT 0.00,
   `status` varchar(155) NOT NULL,
-  `remarks` text DEFAULT 'Order Placed'
+  `remarks` text DEFAULT 'Order Placed',
+  `printed` tinyint(1) NOT NULL DEFAULT 0,
+  `tracking_number` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`order_id`, `user_id`, `address_id`, `total`, `shipping_fee`, `promo_code`, `promo_discount`, `shipping_method`, `payment_method`, `order_date`, `subtotal`, `status`, `remarks`) VALUES
-('ES51987', 10, 10, 550.00, 100.00, '0', 50.00, 'Express Delivery', 'COD', '2025-10-21 15:52:37', 500.00, 'Cancelled', 'Order cancelled by admin'),
-('ES59156', 10, 10, 1250.00, 100.00, '0', 100.00, 'Express Delivery', 'Credit/Debit Card', '2025-10-22 02:10:40', 1250.00, 'Processing', 'Order received and processing'),
-('ES85649', 10, 10, 1000.00, 100.00, '0', 100.00, 'Express Delivery', 'GCash', '2025-10-21 14:54:32', 1000.00, 'Cancelled', 'Order cancelled by seller');
+INSERT INTO `orders` (`order_id`, `user_id`, `address_id`, `total`, `shipping_fee`, `promo_code`, `promo_discount`, `shipping_method`, `payment_method`, `order_date`, `subtotal`, `status`, `remarks`, `printed`, `tracking_number`) VALUES
+('ES14166', 12, 11, 60.00, 0.00, '0', 0.00, 'Standard Delivery', 'COD', '2025-10-31 07:15:50', 60.00, 'Shipped', 'Item has been shipped', 0, NULL);
 
 --
 -- Triggers `orders`
@@ -237,9 +271,7 @@ CREATE TABLE `order_items` (
 --
 
 INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `product_name`, `product_image`, `quantity`, `reviewed`, `price`, `subtotal`, `created_at`) VALUES
-(104, 'ES85649', 7, 'Premium Wireless Headphones', 'uploads/img_6892b4f48ddc06.27583354.png', 5, 0, 200.00, 1000.00, '2025-10-21 14:54:32'),
-(105, 'ES51987', 7, 'Premium Wireless Headphones', 'uploads/img_6892b4f48ddc06.27583354.png', 2, 0, 250.00, 500.00, '2025-10-21 15:52:37'),
-(106, 'ES59156', 7, 'Premium Wireless Headphones', 'uploads/img_6892b4f48ddc06.27583354.png', 5, 0, 250.00, 1250.00, '2025-10-22 02:10:40');
+(132, 'ES14166', 10, 'A4 Bondpaper', 'uploads/img_69041e9e1f7b51.23115272.webp', 1, 0, 60.00, 60.00, '2025-10-31 07:15:50');
 
 -- --------------------------------------------------------
 
@@ -256,15 +288,6 @@ CREATE TABLE `order_item_variants` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `order_item_variants`
---
-
-INSERT INTO `order_item_variants` (`id`, `order_id`, `product_id`, `variant_type`, `variant_value`, `created_at`) VALUES
-(142, 'ES85649', 7, 'size', 'Small', '2025-10-21 14:54:32'),
-(143, 'ES51987', 7, 'size', 'Small', '2025-10-21 15:52:37'),
-(144, 'ES59156', 7, 'size', 'Small', '2025-10-22 02:10:40');
-
 -- --------------------------------------------------------
 
 --
@@ -277,41 +300,19 @@ CREATE TABLE `order_tracking` (
   `status` varchar(50) DEFAULT NULL,
   `remarks` text DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp()
+  `updated_at` datetime DEFAULT current_timestamp(),
+  `tracking_number` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `order_tracking`
 --
 
-INSERT INTO `order_tracking` (`track_id`, `order_id`, `status`, `remarks`, `created_at`, `updated_at`) VALUES
-(99, 'ES85649', 'Accepted', 'Order Placed', '2025-10-21 22:59:05', '2025-10-21 22:59:05'),
-(100, 'ES85649', 'Processing', 'Order Placed', '2025-10-21 22:59:20', '2025-10-21 22:59:20'),
-(101, 'ES85649', 'Shipped', 'Order Placed', '2025-10-21 23:09:33', '2025-10-21 23:09:33'),
-(102, 'ES85649', 'Out for Delivery', 'Order Placed', '2025-10-21 23:17:37', '2025-10-21 23:17:37'),
-(103, 'ES85649', 'Processing', 'Order Placed', '2025-10-21 23:20:42', '2025-10-21 23:20:42'),
-(104, 'ES85649', 'Shipped', 'Order Placed', '2025-10-21 23:21:46', '2025-10-21 23:21:46'),
-(105, 'ES85649', 'Out for Delivery', 'Order Placed', '2025-10-21 23:28:49', '2025-10-21 23:28:49'),
-(106, 'ES85649', 'Delivered', 'Order Placed', '2025-10-21 23:29:04', '2025-10-21 23:29:04'),
-(107, 'ES85649', 'Shipped', 'Order Placed', '2025-10-21 23:48:10', '2025-10-21 23:48:10'),
-(108, 'ES85649', 'Shipped', 'Item has been shipped', '2025-10-21 23:48:28', '2025-10-21 23:48:28'),
-(109, 'ES51987', 'Cancelled', 'Order cancelled by admin', '2025-10-21 23:58:40', '2025-10-21 23:58:40'),
-(110, 'ES51987', 'Cancelled', 'Order cancelled by admin', '2025-10-21 23:58:40', '2025-10-21 23:58:40'),
-(111, 'ES85649', 'Cancelled', 'Order cancelled by seller', '2025-10-22 09:44:00', '2025-10-22 09:44:00'),
-(112, 'ES59156', 'Accepted', 'Order Placed', '2025-10-22 10:12:15', '2025-10-22 10:12:15'),
-(113, 'ES59156', 'Processing', 'Order received and processing', '2025-10-22 10:13:08', '2025-10-22 10:13:08');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `payment_methods`
---
-
-CREATE TABLE `payment_methods` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  `status` enum('active','inactive') DEFAULT 'active'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `order_tracking` (`track_id`, `order_id`, `status`, `remarks`, `created_at`, `updated_at`, `tracking_number`) VALUES
+(182, 'ES14166', 'Accepted', 'Order Placed', '2025-10-31 15:21:00', '2025-10-31 15:21:00', NULL),
+(183, 'ES14166', 'Processing', 'Order received and processing', '2025-10-31 15:22:31', '2025-10-31 15:22:31', NULL),
+(184, 'ES14166', 'Processing', 'Packed and ready to ship', '2025-10-31 15:23:32', '2025-10-31 15:23:32', NULL),
+(185, 'ES14166', 'Shipped', 'Item has been shipped', '2025-10-31 15:29:13', '2025-10-31 15:29:13', NULL);
 
 -- --------------------------------------------------------
 
@@ -336,9 +337,7 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`product_id`, `name`, `price`, `stock`, `category`, `status`, `description`, `created_at`, `sold`) VALUES
-(7, 'Premium Wireless Headphones', 250.00, 138, 'PC', 'active', 'awdasdasdsadasd\r\nsadsadsadasdasdas\r\ndasdsdasdasdasdas\r\ndasdasdasdasasda\r\ndasdasdasdasdasdasd\r\nasdasdsdasdasdsadas\r\ndasdsadasdasdasdsadad', '2025-08-06 01:50:44', 62),
-(8, 'Ethernet Lan Cable', 5.00, 970, 'PC', 'inactive', 'Cat5e Ethernet Cable\r\n\r\nUp to 1 Gbps\r\n\r\nBandwidth: 100 MHz\r\n\r\nDistance: Reliable up to 100m\r\n\r\nPerfect for: Home & office networks, browsing, streaming, light gaming\r\n\r\nCat6 Ethernet Cable\r\n\r\nSpeed: Up to 10 Gbps\r\n\r\nBandwidth: 250 MHz\r\n\r\nEnhanced shielding, reduced interference\r\n\r\nPerfect for: Gaming, 4K/8K streaming, business & enterprise networks', '2025-08-16 04:01:06', 30),
-(9, 'asedsddsdsdsdsd', 45.00, 3432, 'PC', 'inactive', 'adasdasdasdasdasd\r\nsdsdsdasdasdsdas\r\nsdasdasdasdasdasd\r\nsdsdsadsadasddasd', '2025-10-20 10:29:32', 2);
+(10, 'A4 Bondpaper', 200.00, 1993, 'School Supplies', 'active', 'wdadsadawdasdasdaewaeasdasdasedasdas\r\ndasdasdasdasdasdasdasdasdasdasdsadasedasdas\r\ndasdasdasdasdsadasdasdasrdadasdasdasdasdasd\r\nasdasdasdasdassdasdasdasadasdasdasddsadasdsadasdaseqwweqwdadsasdasdasddsdssdsdsdddddddddddds', '2025-10-31 02:27:42', 7);
 
 -- --------------------------------------------------------
 
@@ -358,21 +357,11 @@ CREATE TABLE `product_images` (
 --
 
 INSERT INTO `product_images` (`image_id`, `product_id`, `image_path`, `is_primary`) VALUES
-(86, 7, 'uploads/img_6892b4f48ddc06.27583354.png', 1),
-(87, 7, 'uploads/img_6892b4f48fdde4.49498966.jpg', 0),
-(88, 7, 'uploads/img_6892b4f491d937.12570892.jpg', 0),
-(89, 7, 'uploads/img_6892b4f4947828.14656847.jfif', 0),
-(90, 7, 'uploads/img_6892b4f4955891.38727019.jfif', 0),
-(91, 8, 'uploads/img_68a00282d33814.44390317.jfif', 1),
-(92, 8, 'uploads/img_68a00282d42b08.38437134.jfif', 0),
-(93, 8, 'uploads/img_68a00282d575e8.66323386.jfif', 0),
-(94, 8, 'uploads/img_68a00282d66f69.61443725.jpg', 0),
-(95, 8, 'uploads/img_68a00282d84526.13828351.jpg', 0),
-(96, 9, 'uploads/img_68f60f0ca87131.40254087.png', 1),
-(97, 9, 'uploads/img_68f60f0caac5e3.12293513.jpg', 0),
-(98, 9, 'uploads/img_68f60f0cab6d58.02814583.png', 0),
-(99, 9, 'uploads/img_68f60f0cac34b2.56978452.jpg', 0),
-(100, 9, 'uploads/img_68f60f0cae53a6.84459213.jpg', 0);
+(101, 10, 'uploads/img_69041e9e1f7b51.23115272.webp', 1),
+(102, 10, 'uploads/img_69041e9e232320.48962836.jpg', 0),
+(103, 10, 'uploads/img_69041e9e27b2f6.06798377.jpg', 0),
+(104, 10, 'uploads/img_69041e9e2bda48.57562595.jpg', 0),
+(105, 10, 'uploads/img_69041e9e2f0407.88216702.jpg', 0);
 
 -- --------------------------------------------------------
 
@@ -386,40 +375,6 @@ CREATE TABLE `product_variants` (
   `variant_type` varchar(100) NOT NULL,
   `variant_value` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `product_variants`
---
-
-INSERT INTO `product_variants` (`id`, `product_id`, `variant_type`, `variant_value`) VALUES
-(2, 4, 'Type', 'Cat5'),
-(3, 4, 'Type', 'Cat5e'),
-(4, 4, 'Type', 'Cat6'),
-(5, 4, 'Meter', '10'),
-(6, 4, 'Meter', '20'),
-(7, 4, 'Meter', '30'),
-(8, 4, 'Color', 'Gray'),
-(9, 4, 'Color', 'Blue'),
-(10, 5, 'Color', 'Pink'),
-(11, 5, 'Color', 'Blue'),
-(12, 5, 'Color', 'Red'),
-(13, 5, 'Size', 'Small'),
-(14, 5, 'Size', 'Medium'),
-(15, 5, 'Size', 'Large'),
-(0, 7, 'Size', 'Small'),
-(0, 7, 'Size', 'Medium'),
-(0, 7, 'Size', 'Large'),
-(0, 8, 'Category', 'Cat5e'),
-(0, 8, 'Category', 'Cat6'),
-(0, 8, 'Meter', '5'),
-(0, 8, 'Meter', '10'),
-(0, 8, 'Meter', '15'),
-(0, 8, 'Meter', '20'),
-(0, 8, 'Color', 'Gray'),
-(0, 8, 'Color', 'Blue'),
-(0, 9, 'Color', 'Red'),
-(0, 9, 'Color', 'Blue'),
-(0, 9, 'Color', 'Gray');
 
 -- --------------------------------------------------------
 
@@ -442,8 +397,30 @@ CREATE TABLE `reviews` (
 --
 
 INSERT INTO `reviews` (`review_id`, `order_id`, `product_id`, `user_id`, `rating`, `review`, `created_at`) VALUES
-(9, 0, 7, 4, 5, 'THe prodahsdjasdasjdbsajdbsad', '2025-08-16 10:12:39'),
-(10, 0, 8, 9, 5, 'tesfsdfdsf', '2025-10-20 18:47:11');
+(12, 0, 10, 12, 5, 'asddfsdafsdfsdfsdfsdf', '2025-10-31 10:37:20');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tracking`
+--
+
+CREATE TABLE `tracking` (
+  `id` int(11) NOT NULL,
+  `order_id` varchar(50) NOT NULL,
+  `tracking_number` varchar(20) NOT NULL,
+  `status` varchar(50) NOT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tracking`
+--
+
+INSERT INTO `tracking` (`id`, `order_id`, `tracking_number`, `status`, `remarks`, `created_at`) VALUES
+(1, 'ES39097', '53568263283', 'Shipped', 'Item has been shipped', '2025-10-31 02:58:17'),
+(2, 'ES14166', '53072071997', 'Shipped', 'Item has been shipped', '2025-10-31 07:29:13');
 
 -- --------------------------------------------------------
 
@@ -460,17 +437,19 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `verification_code` varchar(6) DEFAULT NULL,
-  `is_verified` tinyint(1) DEFAULT 0
+  `is_verified` tinyint(1) DEFAULT 0,
+  `remember_token` varchar(64) DEFAULT NULL,
+  `token_expiry` int(11) DEFAULT NULL,
+  `is_banned` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `account_no`, `username`, `email`, `phone`, `password`, `created_at`, `verification_code`, `is_verified`) VALUES
-(4, '', 'earlchrisss', 'earlchristian@example.com', '', '$2y$10$EgnRSmgsw0IcRrX1Czot0u4Ip0G/JX1PK2oGn.3Sl49agpkX8.SgO', '2025-08-06 01:49:04', NULL, 0),
-(9, '33186', 'Earlchriss', 'earlchristiantagalog1@gmail.com', '099234567890', '$2y$10$Hv9oe8Dio3d0ORNA6eHpPeW2EWtFMLnF4WvXB9yS8uo4xmrB3J6Q.', '2025-10-20 09:58:04', '460794', 1),
-(10, '19139', 'Earr', 'earlchristiantagalog10@gmail.com', '099234567890', '$2y$10$EmNJYEdi1AwWtnCsSlb32.cie8D819ayZ0WI4Xs5ZW6baVELem0oC', '2025-10-20 10:34:12', '401218', 1);
+INSERT INTO `users` (`id`, `account_no`, `username`, `email`, `phone`, `password`, `created_at`, `verification_code`, `is_verified`, `remember_token`, `token_expiry`, `is_banned`) VALUES
+(11, '57865', 'earlchristiantagalog1@gmail.com', 'Earlchriss', '099234567890', '$2y$10$NggiyLMXaxwiF7gpDA0B.OHDfRLtys4FoVQchwKt5fWkGCpQTbyCW', '2025-10-31 02:19:20', '600930', 0, NULL, NULL, 1),
+(12, '73817', 'Earlchriss', 'earlchristiantagalog1@gmail.com', '099234567890', '$2y$10$l7huGNW6B0uzhGnxVo8GyeDnHjEw4cqK61HtxW/GsYyAPmCqKHEy.', '2025-10-31 02:19:44', '871702', 1, '6f387f4169eebf9dd586a3f1faaebc5ec6b53c7a37749fc38295c01fd3a84c52', 1764469448, 0);
 
 -- --------------------------------------------------------
 
@@ -481,10 +460,12 @@ INSERT INTO `users` (`id`, `account_no`, `username`, `email`, `phone`, `password
 CREATE TABLE `vouchers` (
   `id` int(11) NOT NULL,
   `code` varchar(50) NOT NULL,
-  `discount` int(11) NOT NULL,
+  `discount` decimal(10,2) NOT NULL,
+  `discount_type` enum('fixed','percent') DEFAULT 'fixed',
+  `min_spend` decimal(10,2) DEFAULT 0.00,
   `expiry` date NOT NULL,
-  `is_used` tinyint(1) DEFAULT 0,
-  `status` enum('Active','Expired') DEFAULT 'Active',
+  `is_used` tinyint(4) NOT NULL DEFAULT 0,
+  `user_id` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -492,8 +473,8 @@ CREATE TABLE `vouchers` (
 -- Dumping data for table `vouchers`
 --
 
-INSERT INTO `vouchers` (`id`, `code`, `discount`, `expiry`, `is_used`, `status`, `created_at`) VALUES
-(3, 'ESISFREE', 150, '2025-08-28', 0, 'Active', '2025-08-15 02:24:37');
+INSERT INTO `vouchers` (`id`, `code`, `discount`, `discount_type`, `min_spend`, `expiry`, `is_used`, `user_id`, `created_at`) VALUES
+(3, 'Secret', 100.00, 'fixed', 0.00, '2025-11-30', 0, NULL, '2025-10-31 07:10:52');
 
 --
 -- Indexes for dumped tables
@@ -511,6 +492,13 @@ ALTER TABLE `addresses`
 --
 ALTER TABLE `admin`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `admin_attendance`
+--
+ALTER TABLE `admin_attendance`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `admin_id` (`admin_id`,`login_date`);
 
 --
 -- Indexes for table `cart`
@@ -533,11 +521,10 @@ ALTER TABLE `categories`
   ADD UNIQUE KEY `name` (`name`);
 
 --
--- Indexes for table `delivery_receipts`
+-- Indexes for table `flash_sale`
 --
-ALTER TABLE `delivery_receipts`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `receipt_id` (`receipt_id`);
+ALTER TABLE `flash_sale`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `notifications`
@@ -584,12 +571,6 @@ ALTER TABLE `order_tracking`
   ADD KEY `order_id` (`order_id`);
 
 --
--- Indexes for table `payment_methods`
---
-ALTER TABLE `payment_methods`
-  ADD PRIMARY KEY (`id`);
-
---
 -- Indexes for table `products`
 --
 ALTER TABLE `products`
@@ -603,6 +584,12 @@ ALTER TABLE `product_images`
   ADD KEY `product_id` (`product_id`);
 
 --
+-- Indexes for table `product_variants`
+--
+ALTER TABLE `product_variants`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `reviews`
 --
 ALTER TABLE `reviews`
@@ -610,6 +597,12 @@ ALTER TABLE `reviews`
   ADD UNIQUE KEY `unique_user_product` (`user_id`,`product_id`),
   ADD KEY `product_id` (`product_id`),
   ADD KEY `reviews_ibfk_1` (`order_id`);
+
+--
+-- Indexes for table `tracking`
+--
+ALTER TABLE `tracking`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `users`
@@ -622,7 +615,8 @@ ALTER TABLE `users`
 -- Indexes for table `vouchers`
 --
 ALTER TABLE `vouchers`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `code` (`code`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -632,7 +626,7 @@ ALTER TABLE `vouchers`
 -- AUTO_INCREMENT for table `addresses`
 --
 ALTER TABLE `addresses`
-  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `admin`
@@ -641,28 +635,34 @@ ALTER TABLE `admin`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `admin_attendance`
+--
+ALTER TABLE `admin_attendance`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
 -- AUTO_INCREMENT for table `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=144;
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=170;
 
 --
 -- AUTO_INCREMENT for table `cart_variants`
 --
 ALTER TABLE `cart_variants`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=206;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=243;
 
 --
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT for table `delivery_receipts`
+-- AUTO_INCREMENT for table `flash_sale`
 --
-ALTER TABLE `delivery_receipts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+ALTER TABLE `flash_sale`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -680,49 +680,55 @@ ALTER TABLE `order_codes`
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=107;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
 
 --
 -- AUTO_INCREMENT for table `order_item_variants`
 --
 ALTER TABLE `order_item_variants`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=185;
 
 --
 -- AUTO_INCREMENT for table `order_tracking`
 --
 ALTER TABLE `order_tracking`
-  MODIFY `track_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=114;
-
---
--- AUTO_INCREMENT for table `payment_methods`
---
-ALTER TABLE `payment_methods`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `track_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=186;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `product_images`
 --
 ALTER TABLE `product_images`
-  MODIFY `image_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
+  MODIFY `image_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
+
+--
+-- AUTO_INCREMENT for table `product_variants`
+--
+ALTER TABLE `product_variants`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `reviews`
 --
 ALTER TABLE `reviews`
-  MODIFY `review_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `review_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `tracking`
+--
+ALTER TABLE `tracking`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `vouchers`

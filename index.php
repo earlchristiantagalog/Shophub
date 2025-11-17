@@ -56,199 +56,170 @@ include 'includes/header.php';
     .text-shadow {
         text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
     }
+</style>
+<!-- 🌟 FLASH SALE SECTION -->
+<section id="flashSaleSection" class="flash-sale-section my-5 d-none">
+    <div class="container py-5 px-4 rounded-4 shadow-lg text-white flash-sale-container text-center">
+        <div class="mb-4">
+            <h2 class="fw-bold mb-2 d-flex align-items-center justify-content-center">
+                <i class="fas fa-bolt me-2 text-warning flash-icon"></i>
+                <span id="flashSaleTitle">FLASH SALE</span>
+            </h2>
+            <p class="mb-0 fs-5">
+                ⚡ Grab <span id="flashSaleDiscount">0%</span> OFF on selected items!
+            </p>
+        </div>
 
-    .flash-sale-bg {
-        background: linear-gradient(90deg, #ff4d4d, #ff9933);
+        <small class="text-light opacity-75 fst-italic" id="flashSaleLabel">Ends soon!</small>
+        <div id="flashCountdown" class="countdown-clock d-flex justify-content-center gap-3"></div>
+    </div>
+</section>
+
+<!-- 🌈 STYLING -->
+<style>
+    .flash-sale-container {
+        background: linear-gradient(135deg, #ff416c, #ff4b2b);
         position: relative;
         overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.2);
     }
 
-    .flash-sale-bg::before {
+    .flash-icon {
+        animation: flashGlow 1.2s infinite alternate;
+    }
+
+    @keyframes flashGlow {
+        from {
+            text-shadow: 0 0 10px #ffd700, 0 0 15px #ffae00;
+        }
+
+        to {
+            text-shadow: 0 0 20px #ffdf00, 0 0 35px #ff6a00;
+        }
+    }
+
+    .countdown-clock {
+        margin-top: 1rem;
+    }
+
+    .time-box {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 10px;
+        min-width: 70px;
+        padding: 10px;
+        text-align: center;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+        transition: all 0.3s ease;
+    }
+
+    .time-box:hover {
+        transform: scale(1.05);
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .time-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #fff;
+        display: block;
+    }
+
+    .time-label {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.75);
+        text-transform: uppercase;
+    }
+
+    .flash-sale-container::before {
         content: "";
         position: absolute;
-        top: 0;
+        top: -50%;
         left: -50%;
         width: 200%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.05);
-        transform: skewX(-20deg);
-        animation: slideLight 6s linear infinite;
+        height: 200%;
+        background: conic-gradient(from 90deg at 50% 50%, rgba(255, 255, 255, 0.15), transparent 30%);
+        animation: rotateGlow 6s linear infinite;
+        z-index: 0;
     }
 
-    @keyframes slideLight {
-        0% {
-            left: -50%;
+    .flash-sale-container>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    @keyframes rotateGlow {
+        to {
+            transform: rotate(360deg);
         }
-
-        100% {
-            left: 150%;
-        }
-    }
-
-    .glow-icon {
-        text-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
-    }
-
-    .countdown-box {
-        display: inline-block;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 1rem;
-        padding: 1rem 1.2rem;
-        color: #fff;
-        font-weight: bold;
-        text-align: center;
-        font-family: "Roboto Mono", monospace;
-        box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
-        /* Prevent flicker by hinting browser */
-        will-change: contents;
-    }
-
-    .countdown-time {
-        display: inline-block;
-        width: 2ch;
-        text-align: center;
-        font-family: "Roboto Mono", monospace;
-        transition: none;
-        /* remove transition to prevent flicker */
-        will-change: contents;
-    }
-
-
-
-    .countdown-time.update {
-        transform: scale(1.2);
-    }
-
-
-
-    .countdown {
-        font-family: "Roboto Mono", monospace;
-        /* fixed-width font = no jumping */
-        font-size: 1.8rem;
-        letter-spacing: 1px;
-        color: #fff;
-        will-change: textContent;
-        /* hint to browser for stable rendering */
-    }
-
-    .countdown span {
-        display: inline-block;
-        width: 2ch;
-        /* keeps consistent space for two digits */
-        text-align: center;
-    }
-
-    .countdown-progress {
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 10px;
-        overflow: hidden;
-        height: 8px;
-        width: 100%;
-        margin-top: 8px;
-    }
-
-    #progressBar {
-        background: tomato;
-        height: 100%;
-        width: 100%;
-        border-radius: 10px;
-        transition: width 1s linear;
     }
 </style>
 
-<!-- FLASH SALE SECTION -->
-<section class="flash-sale-section my-5">
-    <div class="container text-white py-4 px-4 rounded-4 shadow-lg flash-sale-bg">
-        <div class="row align-items-center justify-content-between">
-            <div class="col-md-7 mb-3 mb-md-0">
-                <h2 class="fw-bold mb-2 d-flex align-items-center">
-                    <i class="fas fa-bolt me-2 text-warning glow-icon"></i> FLASH SALE
-                </h2>
-                <p class="mb-0 fs-5 text-light">🔥 Hot deals available for a limited time only! Don’t miss out.</p>
-            </div>
-            <div class="col-md-5 text-md-end">
-                <div id="flashCountdown" class="countdown-box">
-                    <span id="h1" class="countdown-time">0</span>
-                    <span id="h2" class="countdown-time">0</span> :
-                    <span id="m1" class="countdown-time">0</span>
-                    <span id="m2" class="countdown-time">0</span> :
-                    <span id="s1" class="countdown-time">0</span>
-                    <span id="s2" class="countdown-time">0</span>
-                </div>
-                <div class="countdown-progress mt-2">
-                    <div id="progressBar"></div>
-                </div>
-                <small class="text-light-50 fst-italic">Ends soon!</small>
-            </div>
-        </div>
-    </div>
-</section>
+<!-- ⚙️ SCRIPT -->
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const totalDuration = 60 * 60 * 1000; // 1 hour in milliseconds
+        fetch("fetch_active_flashsale.php")
+            .then(res => res.json())
+            .then(data => {
+                if (!data) return;
 
-        // ✅ Only set endTime if it doesn't exist in localStorage
-        let endTime = localStorage.getItem("flashSaleEndTime");
-        if (!endTime) {
-            endTime = Date.now() + totalDuration;
-            localStorage.setItem("flashSaleEndTime", endTime);
-        } else {
-            endTime = parseInt(endTime, 10);
-        }
+                const section = document.getElementById("flashSaleSection");
+                section.classList.remove("d-none");
 
-        const h1 = document.getElementById("h1"),
-            h2 = document.getElementById("h2"),
-            m1 = document.getElementById("m1"),
-            m2 = document.getElementById("m2"),
-            s1 = document.getElementById("s1"),
-            s2 = document.getElementById("s2"),
-            progressBar = document.getElementById("progressBar"),
-            countdownContainer = document.getElementById("flashCountdown");
+                const title = document.getElementById("flashSaleTitle");
+                const discount = document.getElementById("flashSaleDiscount");
+                const countdown = document.getElementById("flashCountdown");
+                const label = document.getElementById("flashSaleLabel");
 
-        let lastH = "",
-            lastM = "",
-            lastS = "";
+                title.textContent = data.title;
+                discount.textContent = data.discount + "%";
 
-        const updateCountdown = () => {
-            const now = Date.now();
-            const distance = endTime - now;
+                const startTime = new Date(data.start_time).getTime();
+                const endTime = new Date(data.end_time).getTime();
+                let status = data.status;
 
-            if (distance <= 0) {
-                clearInterval(timer);
-                countdownContainer.innerHTML = "<span class='text-warning fw-bold'>SALE ENDED</span>";
-                progressBar.style.width = "0%";
-                localStorage.removeItem("flashSaleEndTime"); // reset for next sale
-                return;
-            }
+                function updateCountdown() {
+                    const now = Date.now();
+                    let distance, textLabel;
 
-            const h = String(Math.floor((distance / (1000 * 60 * 60)) % 24)).padStart(2, "0");
-            const m = String(Math.floor((distance / (1000 * 60)) % 60)).padStart(2, "0");
-            const s = String(Math.floor((distance / 1000) % 60)).padStart(2, "0");
+                    // Check status
+                    if (status === "upcoming" && now < startTime) {
+                        distance = startTime - now;
+                        textLabel = "Starts in";
+                    } else {
+                        distance = endTime - now;
+                        textLabel = "Ends in";
+                        status = "active";
+                    }
 
-            if (h !== lastH) {
-                h1.textContent = h[0];
-                h2.textContent = h[1];
-                lastH = h;
-            }
-            if (m !== lastM) {
-                m1.textContent = m[0];
-                m2.textContent = m[1];
-                lastM = m;
-            }
-            if (s !== lastS) {
-                s1.textContent = s[0];
-                s2.textContent = s[1];
-                lastS = s;
-            }
+                    if (distance <= 0 && status === "active") {
+                        clearInterval(timer);
+                        section.remove();
+                        return;
+                    }
 
-            const progressPercent = Math.max(0, (distance / totalDuration) * 100);
-            progressBar.style.width = `${progressPercent}%`;
-        };
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
+                    const minutes = Math.floor((distance / (1000 * 60)) % 60);
+                    const seconds = Math.floor((distance / 1000) % 60);
 
-        const timer = setInterval(updateCountdown, 1000);
-        updateCountdown();
+                    label.textContent = `${textLabel}!`;
+
+                    countdown.innerHTML = `
+          <div class="time-box"><span class="time-number">${String(days).padStart(2, "0")}</span><span class="time-label">Days</span></div>
+          <div class="time-box"><span class="time-number">${String(hours).padStart(2, "0")}</span><span class="time-label">Hours</span></div>
+          <div class="time-box"><span class="time-number">${String(minutes).padStart(2, "0")}</span><span class="time-label">Mins</span></div>
+          <div class="time-box"><span class="time-number">${String(seconds).padStart(2, "0")}</span><span class="time-label">Secs</span></div>
+        `;
+                }
+
+                updateCountdown();
+                const timer = setInterval(updateCountdown, 1000);
+            })
+            .catch(err => console.error("Error loading flash sale:", err));
     });
 </script>
+
 
 <!-- 🛍️ Featured Products -->
 <div class="container mt-5">
@@ -258,6 +229,12 @@ include 'includes/header.php';
         <?php
         $conn = new mysqli("localhost", "root", "", "shophub");
         if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
+        // ✅ Check if there’s an active flash sale
+        $flash_sale = null;
+        $fs_result = $conn->query("SELECT * FROM flash_sale WHERE NOW() BETWEEN start_time AND end_time LIMIT 1");
+        if ($fs_result && $fs_result->num_rows > 0) {
+            $flash_sale = $fs_result->fetch_assoc();
+        }
 
         $sql = "SELECT p.product_id, p.name, p.price, p.sold, p.created_at, img.image_path
         FROM products p
@@ -279,28 +256,31 @@ include 'includes/header.php';
                 // Check if product is new (added within 2 days)
                 $isNew = (new DateTime())->diff(new DateTime($row['created_at']))->days < 2;
 
-                // Determine discount
                 $discount = 0;
 
-                // If user is new (first login or first order)
+                // Apply flash sale discount if active
+                if ($flash_sale) {
+                    $discount = max($discount, ((float)$flash_sale['discount'] / 100));
+                }
+
+                // If user is new
                 if (isset($_SESSION['user_id'])) {
                     $user_id = $_SESSION['user_id'];
                     $check_orders = $conn->query("SELECT COUNT(*) AS total FROM orders WHERE user_id = $user_id");
                     $user_orders = $check_orders->fetch_assoc()['total'] ?? 0;
 
                     if ($user_orders == 0) {
-                        $discount = 0.20; // 10% for new users
+                        $discount = max($discount, 0.20);
                     }
                 }
 
                 // If product is new
                 if ($isNew) {
-                    $discount = max($discount, 0.20); // ensure 10% minimum discount for new products
+                    $discount = max($discount, 0.20);
                 }
-
-                // Compute discounted price if applicable
                 $original_price = $row['price'];
                 $discounted_price = $discount > 0 ? $original_price * (1 - $discount) : $original_price;
+
 
 
                 // Get ratings
@@ -356,7 +336,25 @@ include 'includes/header.php';
 </div>
 
 <style>
+    /* --- Product Card Base Styles --- */
+    .product-card {
+        border-radius: 0.75rem;
+        overflow: hidden;
+        background: #fff;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .product-card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+    }
+
+    /* --- Product Image --- */
     .product-img {
+        width: 100%;
         height: 220px;
         object-fit: cover;
         border-radius: 0.5rem 0.5rem 0 0;
@@ -367,26 +365,89 @@ include 'includes/header.php';
         transform: scale(1.05);
     }
 
-    .product-card {
-        border-radius: 0.75rem;
-        transition: all 0.3s ease;
+    /* --- Product Details --- */
+    .product-body {
+        padding: 1rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
-    .product-card:hover {
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    .product-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .product-price {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #ee4d2d;
+    }
+
+    .text-decoration-line-through {
+        color: #888;
+        margin-left: 6px;
+        font-size: 0.85rem;
     }
 
     .badge.bg-warning.text-dark {
-        font-weight: bold;
+        font-weight: 600;
         font-size: 0.85rem;
         border-radius: 0.4rem;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
-    .text-decoration-line-through {
-        margin-left: 5px;
-        font-size: 0.85em;
+    /* --- Responsive Grid Layout --- */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* --- Mobile Optimizations --- */
+    @media (max-width: 375px) {
+        .product-img {
+            height: 180px;
+        }
+
+        .product-title {
+            font-size: 0.95rem;
+        }
+
+        .product-price {
+            font-size: 1rem;
+        }
+
+        .badge.bg-warning.text-dark {
+            font-size: 0.75rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .product-img {
+            height: 160px;
+        }
+
+        .product-title {
+            font-size: 0.9rem;
+        }
+
+        .product-price {
+            font-size: 0.95rem;
+        }
+
+        .product-body {
+            padding: 0.8rem;
+        }
     }
 </style>
+
 
 <?php include 'includes/footer.php'; ?>

@@ -6,6 +6,8 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'chillerlan\\Settings\\' => array($vendorDir . '/chillerlan/php-settings-container/src'),
+    'chillerlan\\QRCode\\' => array($vendorDir . '/chillerlan/php-qrcode/src'),
     'Picqer\\Barcode\\' => array($vendorDir . '/picqer/php-barcode-generator/src'),
     'Endroid\\QrCode\\' => array($vendorDir . '/endroid/qr-code/src'),
     'DASPRiD\\Enum\\' => array($vendorDir . '/dasprid/enum/src'),

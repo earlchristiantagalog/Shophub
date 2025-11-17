@@ -2,7 +2,8 @@
 require '../includes/db.php';
 require 'vendor/autoload.php';
 
-if (!isset($_GET['order_id'])) die('No order specified.');
+if (!isset($_GET['order_id']))
+    die('No order specified.');
 $order_id = $_GET['order_id'];
 
 /* 🧩 Fetch Order Details */
@@ -20,7 +21,8 @@ $stmt = $conn->prepare("
 $stmt->bind_param("s", $order_id);
 $stmt->execute();
 $result = $stmt->get_result();
-if ($result->num_rows === 0) die('Order not found.');
+if ($result->num_rows === 0)
+    die('Order not found.');
 $order = $result->fetch_assoc();
 $stmt->close();
 
@@ -64,134 +66,135 @@ $estimated = getEstimatedDelivery($order['shipping_method'], $order['order_date'
 
     <style>
         @page {
-    size: A6 portrait;
-    margin: 0;
-}
+            size: A6 portrait;
+            margin: 0;
+        }
 
-html, body {
-    width: 105mm;
-    height: 148mm;
-    margin: 0;
-    padding: 0;
-    background: #fff;
-    font-family: 'Arial', sans-serif;
-}
+        html,
+        body {
+            width: 105mm;
+            height: 148mm;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            font-family: 'Arial', sans-serif;
+        }
 
-body {
-    display: flex;
-    justify-content: center;
-}
+        body {
+            display: flex;
+            justify-content: center;
+        }
 
-.waybill {
-    width: 100%;
-    height: 100%;
-    border: 1.2px solid #000;
-    padding: 6px 8px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-}
+        .waybill {
+            width: 100%;
+            height: 100%;
+            border: 1.2px solid #000;
+            padding: 6px 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
 
-/* HEADER */
-.courier-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1.2px solid #000;
-    padding-bottom: 4px;
-    margin-bottom: 6px;
-}
+        /* HEADER */
+        .courier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1.2px solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+        }
 
-.courier-header .logo {
-    font-size: 16px;
-    font-weight: 900;
-    color: #d32f2f;
-}
+        .courier-header .logo {
+            font-size: 16px;
+            font-weight: 900;
+            color: #d32f2f;
+        }
 
-.courier-header .route {
-    font-size: 9px;
-    text-align: right;
-}
+        .courier-header .route {
+            font-size: 9px;
+            text-align: right;
+        }
 
-/* BARCODE */
-.barcode-box {
-    text-align: center;
-    border-bottom: 1.2px solid #000;
-    padding-bottom: 6px;
-    margin-bottom: 8px;
-}
+        /* BARCODE */
+        .barcode-box {
+            text-align: center;
+            border-bottom: 1.2px solid #000;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
 
-.barcode-box img {
-    width: 100%;
-    max-width: 230px;
-    height: 60px;
-}
+        .barcode-box img {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto;
+        }
 
-.tracking-number {
-    font-size: 16px;
-    font-weight: bold;
-}
 
-.order-id {
-    font-size: 11px;
-}
+        .tracking-number {
+            font-size: 16px;
+            font-weight: bold;
+        }
 
-/* SECTION TITLE */
-.section-title {
-    font-weight: bold;
-    font-size: 12px;
-    background: #000;
-    color: #fff;
-    padding: 3px 5px;
-}
+        .order-id {
+            font-size: 11px;
+        }
 
-/* BOX CONTAINER */
-.section-box {
-    border: 1px solid #000;
-    padding: 6px;
-    margin-bottom: 8px;
-}
+        /* SECTION TITLE */
+        .section-title {
+            font-weight: bold;
+            font-size: 12px;
+            background: #000;
+            color: #fff;
+            padding: 3px 5px;
+        }
 
-/* INFO TEXT (BIGGER) */
-.info {
-    font-size: 11px;
-    line-height: 1.4;
-}
+        /* BOX CONTAINER */
+        .section-box {
+            border: 1px solid #000;
+            padding: 6px;
+            margin-bottom: 8px;
+        }
 
-/* GRID (BIGGER TEXT) */
-.grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px 10px;
-    font-size: 11px;
-}
+        /* INFO TEXT (BIGGER) */
+        .info {
+            font-size: 11px;
+            line-height: 1.4;
+        }
 
-/* FOOTER */
-.bottom {
-    border-top: 1px solid #000;
-    margin-top: auto;
-    padding-top: 4px;
-    font-size: 9px;
-}
+        /* GRID (BIGGER TEXT) */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 10px;
+            font-size: 11px;
+        }
 
-/* Hide button on print */
-@media print {
-    .pdf-button {
-        display: none;
-    }
-}
+        /* FOOTER */
+        .bottom {
+            border-top: 1px solid #000;
+            margin-top: auto;
+            padding-top: 4px;
+            font-size: 9px;
+        }
 
-.pdf-button {
-    display: block;
-    background: black;
-    color: white;
-    border-radius: 4px;
-    padding: 6px;
-    text-align: center;
-    font-size: 11px;
-    margin-top: 6px;
-}
+        /* Hide button on print */
+        @media print {
+            .pdf-button {
+                display: none;
+            }
+        }
 
+        .pdf-button {
+            display: block;
+            background: black;
+            color: white;
+            border-radius: 4px;
+            padding: 6px;
+            text-align: center;
+            font-size: 11px;
+            margin-top: 6px;
+        }
     </style>
 </head>
 
@@ -209,42 +212,51 @@ body {
 
         <!-- BARCODE -->
         <div class="barcode-box">
-            <img src="barcode.php?code=<?= urlencode($tracking_number) ?>" alt="Barcode">
+            <?php if ($tracking_number !== 'PENDING'): ?>
+               <img src="qr.php?code=<?= urlencode($tracking_number) ?>" alt="QR Code">
+
+            <?php else: ?>
+                <div style="width:140px;height:140px;border:1px solid #000;margin:0 auto;
+                display:flex;align-items:center;justify-content:center;font-size:12px;">
+                    NO QR AVAILABLE
+                </div>
+            <?php endif; ?>
+
             <div class="tracking-number"><?= htmlspecialchars($tracking_number) ?></div>
             <div class="order-id">Order ID: <?= htmlspecialchars($order['order_id']) ?></div>
         </div>
 
         <div class="section-box">
-    <div class="section-title">SHIP TO</div>
-    <div class="info">
-        <strong><?= htmlspecialchars($order['first_name'] . ' ' . $order['last_name']) ?></strong><br>
-        <?= htmlspecialchars($order['address_line_1']) ?>, <?= htmlspecialchars($order['barangay']) ?>,
-        <?= htmlspecialchars($order['city']) ?>, <?= htmlspecialchars($order['province']) ?><br>
-        <?= htmlspecialchars($order['region']) ?> <?= htmlspecialchars($order['zip_code']) ?><br>
-        📞 <?= htmlspecialchars($order['phone']) ?>
-    </div>
-</div>
+            <div class="section-title">SHIP TO</div>
+            <div class="info">
+                <strong><?= htmlspecialchars($order['first_name'] . ' ' . $order['last_name']) ?></strong><br>
+                <?= htmlspecialchars($order['address_line_1']) ?>, <?= htmlspecialchars($order['barangay']) ?>,
+                <?= htmlspecialchars($order['city']) ?>, <?= htmlspecialchars($order['province']) ?><br>
+                <?= htmlspecialchars($order['region']) ?> <?= htmlspecialchars($order['zip_code']) ?><br>
+                📞 <?= htmlspecialchars($order['phone']) ?>
+            </div>
+        </div>
 
 
         <div class="section-box">
-    <div class="section-title">SHIP FROM</div>
-    <div class="info">
-        <strong><?= htmlspecialchars($seller_name) ?></strong><br>
-        <?= htmlspecialchars($seller_address) ?><br>
-        📞 <?= htmlspecialchars($seller_phone) ?>
-    </div>
-</div>
+            <div class="section-title">SHIP FROM</div>
+            <div class="info">
+                <strong><?= htmlspecialchars($seller_name) ?></strong><br>
+                <?= htmlspecialchars($seller_address) ?><br>
+                📞 <?= htmlspecialchars($seller_phone) ?>
+            </div>
+        </div>
 
 
         <div class="section-box">
-    <div class="section-title">DETAILS</div>
-    <div class="grid">
-        <div><strong>Method:</strong> <?= htmlspecialchars($order['shipping_method']) ?></div>
-        <div><strong>Date:</strong> <?= date('M d, Y', strtotime($order['order_date'])) ?></div>
-        <div><strong>Amount:</strong> ₱<?= number_format($order['total'], 2) ?></div>
-        <div><strong>ETA:</strong> <?= htmlspecialchars($estimated) ?></div>
-    </div>
-</div>
+            <div class="section-title">DETAILS</div>
+            <div class="grid">
+                <div><strong>Method:</strong> <?= htmlspecialchars($order['shipping_method']) ?></div>
+                <div><strong>Date:</strong> <?= date('M d, Y', strtotime($order['order_date'])) ?></div>
+                <div><strong>Amount:</strong> ₱<?= number_format($order['total'], 2) ?></div>
+                <div><strong>ETA:</strong> <?= htmlspecialchars($estimated) ?></div>
+            </div>
+        </div>
 
 
         <!-- FOOTER -->
@@ -252,14 +264,15 @@ body {
             <strong>Shophub Express</strong> • Waybill for delivery<br>
         </div>
 
-        <a href="#" class="pdf-button" id="downloadBtn" data-order-id="<?= htmlspecialchars($order['order_id']) ?>">Download PDF</a>
+        <a href="#" class="pdf-button" id="downloadBtn"
+            data-order-id="<?= htmlspecialchars($order['order_id']) ?>">Download PDF</a>
     </div>
 
     <!-- JS FOR PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        document.getElementById("downloadBtn").addEventListener("click", async function(e) {
+        document.getElementById("downloadBtn").addEventListener("click", async function (e) {
             e.preventDefault();
 
             const btn = this;

@@ -7,6 +7,11 @@ namespace Composer\Autoload;
 class ComposerStaticInit04988a7aebfbeaf6bb7abe8410c0eba1
 {
     public static $prefixLengthsPsr4 = array (
+        'c' =>
+        array (
+            'chillerlan\\Settings\\' => 20,
+            'chillerlan\\QRCode\\' => 18,
+        ),
         'P' =>
         array (
             'Picqer\\Barcode\\' => 15,
@@ -26,6 +31,14 @@ class ComposerStaticInit04988a7aebfbeaf6bb7abe8410c0eba1
     );
 
     public static $prefixDirsPsr4 = array (
+        'chillerlan\\Settings\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/chillerlan/php-settings-container/src',
+        ),
+        'chillerlan\\QRCode\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/chillerlan/php-qrcode/src',
+        ),
         'Picqer\\Barcode\\' =>
         array (
             0 => __DIR__ . '/..' . '/picqer/php-barcode-generator/src',

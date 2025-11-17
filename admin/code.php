@@ -245,3 +245,39 @@ if (isset($_POST['add_category'])) {
     redirect("products.php", "Product Category added successfully");
     exit();
 }
+
+// Add Rider
+if (isset($_POST['add_rider'])) {
+    $full_name = trim($_POST['full_name']);
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
+
+    if ($full_name && $email && $password) {
+
+        // Hash password
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        // Generate rider ID (12 characters: letters + numbers)
+        function generateRiderID($length = 12) {
+            $chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $id = '';
+            for ($i = 0; $i < $length; $i++) {
+                $id .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+            return $id;
+        }
+        $rider_id = generateRiderID();
+
+        // Insert rider into the table
+        $stmt = $conn->prepare("INSERT INTO riders (rider_id, full_name, email, password) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $rider_id, $full_name, $email, $hashed_password);
+        $stmt->execute();
+        $stmt->close();
+
+        redirect("admin.php", "Rider added successfully");
+        exit();
+    } else {
+       redirect("admin.php", "Rider not added");
+        exit();
+    }
+}

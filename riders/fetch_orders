@@ -1,0 +1,28 @@
+<?php
+session_start();
+require '../includes/db.php';
+
+if(!isset($_SESSION['rider_auth']) || !isset($_SESSION['rider_id'])){
+    echo json_encode(['success'=>false,'message'=>'Unauthorized']);
+    exit;
+}
+
+$rider_id = $_SESSION['rider_id'];
+
+$stmt = $conn->prepare("
+    SELECT o.order_id, a.first_name, a.last_name, u.phone, a.address_line_1, a.barangay, a.city, a.province, o.status
+    FROM orders o
+    JOIN users u ON o.user_id=u.id
+    JOIN addresses a ON o.address_id=a.address_id
+    WHERE o.rider_id = ?
+    ORDER BY o.order_date DESC
+");
+$stmt->bind_param("i",$rider_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$orders = [];
+while($row = $result->fetch_assoc()) $orders[] = $row;
+
+echo json_encode(['success'=>true,'orders'=>$orders]);
+?>

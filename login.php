@@ -10,7 +10,7 @@ if (!isset($_SESSION['auth']) && isset($_COOKIE['remember_token'])) {
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $result = $stmt->get_result();
-
+    
     if ($user = $result->fetch_assoc()) {
         // ❌ Block auto-login if banned
         if ($user['is_banned']) {

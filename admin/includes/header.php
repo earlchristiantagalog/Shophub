@@ -404,6 +404,11 @@ $pageName = substr($_SERVER['SCRIPT_NAME'], strrpos($_SERVER['SCRIPT_NAME'], '/'
                             <i class="bi bi-check2-circle"></i> Completed
                         </a>
                     </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link <?= $pageName == 'inventory.php' ? 'active':''; ?>" href="inventory.php">
+                            <i class="bi bi-check2-circle"></i> Inventory
+                        </a>
+                    </li>
                     <li class="nav-item mb-2"><a class="nav-link text-white <?= $pageName == 'customers.php' ? 'active':''; ?>" href="customers.php"><i class="bi bi-people"></i> Customers</a></li>
                     <li class="nav-item mb-2"><a class="nav-link text-white <?= $pageName == 'admin.php' ? 'active':''; ?>" href="admin.php"><i class="bi bi-person"></i> Admin</a></li>
                     <li class="nav-item mb-2"><a class="nav-link text-white <?= $pageName == 'settings.php' ? 'active':''; ?>" href="settings.php"><i class="bi bi-gear"></i> Settings</a></li>

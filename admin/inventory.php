@@ -1,266 +1,360 @@
 <?php
+// inventory.php  (Sales Dashboard)
+// Includes DB connection and header/footer from your project
 include 'db.php';
 include 'includes/header.php';
 
-// Pagination setup
-$limit = 10; // items per page
-$page = $_GET['page'] ?? 1;
-$start = ($page - 1) * $limit;
-
-// Filters
-$search = $_GET['search'] ?? "";
-$category = $_GET['category'] ?? "";
-
-// Base query with LEFT JOIN to fetch primary image
-$sql = "SELECT i.*, pi.image_path AS primary_image
-        FROM inventory i
-        LEFT JOIN product_images pi 
-            ON i.product_id = pi.product_id AND pi.is_primary = 1
-        WHERE 1";
-
-if ($search !== "") {
-    $sql .= " AND i.name LIKE '%$search%'";
-}
-if ($category !== "") {
-    $sql .= " AND i.category = '$category'";
+// Safety: ensure $conn exists
+if (!isset($conn)) {
+    die("Database connection not available.");
 }
 
-// Total sales / revenue overall
-$sales = $conn->query("SELECT 
-            COUNT(*) AS total_products,
-            SUM(stock) AS total_stock,
-            SUM(sold) AS total_sold,
-            SUM(sold * price) AS total_revenue
-        FROM inventory");
-$sales_data = $sales->fetch_assoc();
+/* ---------------------------
+   SALES SUMMARY QUERIES
+   Use IFNULL so aggregates return 0 instead of NULL
+--------------------------- */
 
-// Today
-$today_sales = $conn->query("SELECT SUM(sold * price) AS revenue_today, SUM(sold) AS sold_today
-    FROM inventory
-    WHERE DATE(created_at) = CURDATE()");
-$today = $today_sales->fetch_assoc();
+/* Overall totals (products, stock, sold, revenue) */
+$sales_q = "
+    SELECT
+        COUNT(DISTINCT i.product_id) AS total_products,
+        IFNULL(SUM(i.stock), 0) AS total_stock,
+        IFNULL(SUM(oi.quantity), 0) AS total_sold,
+        IFNULL(SUM(oi.quantity * oi.price), 0) AS total_revenue
+    FROM inventory i
+    LEFT JOIN order_items oi ON i.product_id = oi.product_id
+    LEFT JOIN orders o ON oi.order_id = o.order_id AND o.status = 'Accepted'
+";
+$sales_res = $conn->query($sales_q);
+$sales_data = $sales_res ? $sales_res->fetch_assoc() : [
+    'total_products' => 0, 'total_stock' => 0, 'total_sold' => 0, 'total_revenue' => 0
+];
 
-// This week
-$week_sales = $conn->query("SELECT SUM(sold * price) AS revenue_week, SUM(sold) AS sold_week
-    FROM inventory
-    WHERE YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)");
-$week = $week_sales->fetch_assoc();
+/* Today */
+$today_q = "
+    SELECT
+        IFNULL(SUM(oi.quantity),0) AS sold_today,
+        IFNULL(SUM(oi.quantity * oi.price),0) AS revenue_today
+    FROM order_items oi
+    INNER JOIN orders o ON oi.order_id = o.order_id
+    WHERE o.status = 'Accepted'
+      AND DATE(o.order_date) = CURDATE()
+";
+$today_res = $conn->query($today_q);
+$today = $today_res ? $today_res->fetch_assoc() : ['sold_today' => 0, 'revenue_today' => 0];
 
-// This month
-$month_sales = $conn->query("SELECT SUM(sold * price) AS revenue_month, SUM(sold) AS sold_month
-    FROM inventory
-    WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
-$month = $month_sales->fetch_assoc();
+/* This week (ISO week, YEARWEEK with mode 1) */
+$week_q = "
+    SELECT
+        IFNULL(SUM(oi.quantity),0) AS sold_week,
+        IFNULL(SUM(oi.quantity * oi.price),0) AS revenue_week
+    FROM order_items oi
+    INNER JOIN orders o ON oi.order_id = o.order_id
+    WHERE o.status = 'Accepted'
+      AND YEARWEEK(o.order_date, 1) = YEARWEEK(CURDATE(), 1)
+";
+$week_res = $conn->query($week_q);
+$week = $week_res ? $week_res->fetch_assoc() : ['sold_week' => 0, 'revenue_week' => 0];
 
+/* This month */
+$month_q = "
+    SELECT
+        IFNULL(SUM(oi.quantity),0) AS sold_month,
+        IFNULL(SUM(oi.quantity * oi.price),0) AS revenue_month
+    FROM order_items oi
+    INNER JOIN orders o ON oi.order_id = o.order_id
+    WHERE o.status = 'Accepted'
+      AND MONTH(o.order_date) = MONTH(CURDATE())
+      AND YEAR(o.order_date) = YEAR(CURDATE())
+";
+$month_res = $conn->query($month_q);
+$month = $month_res ? $month_res->fetch_assoc() : ['sold_month' => 0, 'revenue_month' => 0];
 
-// Count total rows for pagination
-$total_result = $conn->query($sql);
-$total = $total_result->num_rows;
-$pages = ceil($total / $limit);
+/* Small helper to format currency (Philippine Peso) */
+function peso($n) {
+    return '₱' . number_format((float)$n, 2);
+}
 
-// Add ORDER BY and LIMIT for pagination
-$sql .= " ORDER BY i.product_id DESC LIMIT $start, $limit";
-$result = $conn->query($sql);
+/* For the chart: show last 7 days sales (quantity). We'll query orders grouped by date.
+   If your dataset is huge you might want to limit or optimize this later. */
+$chart_days = [];
+$chart_values = [];
 
-// Fetch categories for filter dropdown
-$cats_result = $conn->query("SELECT DISTINCT category FROM inventory");
+$chart_q = "
+    SELECT DATE(o.order_date) AS dt, IFNULL(SUM(oi.quantity),0) AS qty
+    FROM orders o
+    LEFT JOIN order_items oi ON o.order_id = oi.order_id
+    WHERE o.status = 'Accepted'
+      AND DATE(o.order_date) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+    GROUP BY DATE(o.order_date)
+    ORDER BY DATE(o.order_date) ASC
+";
+$chart_res = $conn->query($chart_q);
+
+$days_map = [];
+if ($chart_res) {
+    while ($r = $chart_res->fetch_assoc()) {
+        $days_map[$r['dt']] = (int)$r['qty'];
+    }
+}
+// build last 7 days labels & values (even if some days have 0)
+for ($i = 6; $i >= 0; $i--) {
+    $d = date('Y-m-d', strtotime("-{$i} days"));
+    $label = date('M j', strtotime($d)); // e.g. Nov 21
+    $chart_days[] = $label;
+    $chart_values[] = isset($days_map[$d]) ? (int)$days_map[$d] : 0;
+}
+
+/* Recently Added Products (latest 10) */
+$recent_q = "
+    SELECT 
+        i.*, 
+        pi.image_path AS primary_image
+    FROM inventory i
+    LEFT JOIN product_images pi 
+        ON i.product_id = pi.product_id AND pi.is_primary = 1
+    ORDER BY i.created_at DESC
+    LIMIT 10
+";
+
+$recent_res = $conn->query($recent_q);
+
 ?>
-<style>
-    @media print {
-    body * {
-        visibility: hidden; /* hide everything by default */
-    }
-    main, main * {
-        visibility: visible; /* show the main content */
-    }
-    main {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-    .btn, .pagination, .form-control, .form-select {
-        display: none !important; /* hide buttons, filters, pagination */
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    table, table th, table td {
-        border: 1px solid #000;
-    }
-    th, td {
-        padding: 5px;
-        font-size: 12pt;
-    }
-    img {
-        max-width: 100px; /* resize product & barcode images for print */
-        height: auto;
-    }
-}
 
+<style>
+/* Small style tweaks for the dashboard cards */
+.stat-card { border-radius: 0.75rem; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+.stat-card .card-body { padding: 1.1rem; }
+.kpi-small { font-size: 0.85rem; color: rgba(255,255,255,0.95); opacity: 0.95; }
+.panel-row { gap: 1rem; display: flex; flex-wrap: wrap; }
+.panel-row .col { min-width: 220px; flex: 1 1 220px; }
 </style>
+
 <main class="col-md-10 ms-sm-auto col-lg-10 px-md-4 py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">Sales & Inventory</h2>
-        <a href="add_item.php" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Product</a>
-        <a href="print_report.php" class="btn btn-secondary"><i class="bi bi-printer"></i> Print</a>
+        <h2 class="fw-bold">Sales Dashboard</h2>
+        <div>
+            <a href="inventory.php" class="btn btn-outline-secondary me-2"><i class="bi bi-box-seam"></i> Inventory</a>
+            <a href="add_item.php" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Product</a>
+        </div>
     </div>
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Total Products</h5>
-                <p class="card-text fs-4"><?= $sales_data['total_products'] ?? 0 ?></p>
+
+    <!-- KPI Cards -->
+    <div class="row panel-row mb-4">
+        <div class="col">
+            <div class="card stat-card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="kpi-small">Total Products</h6>
+                            <h3 class="mb-0"><?= (int)$sales_data['total_products'] ?></h3>
+                        </div>
+                        <div class="text-end">
+                            <i class="bi bi-box-seam" style="font-size:28px; opacity:0.9"></i>
+                        </div>
+                    </div>
+                    <small class="kpi-small">Total distinct products</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card stat-card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="kpi-small">Total Stock</h6>
+                            <h3 class="mb-0"><?= (int)$sales_data['total_stock'] ?></h3>
+                        </div>
+                        <div class="text-end">
+                            <i class="bi bi-stack" style="font-size:28px; opacity:0.9"></i>
+                        </div>
+                    </div>
+                    <small class="kpi-small">Sum of stock across inventory</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card stat-card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="kpi-small">Sold Today</h6>
+                            <h3 class="mb-0"><?= (int)$today['sold_today'] ?></h3>
+                            <small class="d-block mt-1"><?= peso($today['revenue_today']) ?> revenue</small>
+                        </div>
+                        <div class="text-end">
+                            <i class="bi bi-calendar-day" style="font-size:28px; opacity:0.9"></i>
+                        </div>
+                    </div>
+                    <small class="kpi-small">Sales with status 'Accepted' today</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card stat-card text-white bg-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="kpi-small">Sold This Week</h6>
+                            <h3 class="mb-0"><?= (int)$week['sold_week'] ?></h3>
+                            <small class="d-block mt-1"><?= peso($week['revenue_week']) ?> revenue</small>
+                        </div>
+                        <div class="text-end">
+                            <i class="bi bi-calendar-week" style="font-size:28px; opacity:0.9"></i>
+                        </div>
+                    </div>
+                    <small class="kpi-small">Current ISO week sales (Accepted)</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card stat-card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="kpi-small">Sold This Month</h6>
+                            <h3 class="mb-0"><?= (int)$month['sold_month'] ?></h3>
+                            <small class="d-block mt-1"><?= peso($month['revenue_month']) ?> revenue</small>
+                        </div>
+                        <div class="text-end">
+                            <i class="bi bi-calendar3" style="font-size:28px; opacity:0.9"></i>
+                        </div>
+                    </div>
+                    <small class="kpi-small">Current month sales (Accepted)</small>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-success mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Total Stock</h5>
-                <p class="card-text fs-4"><?= $sales_data['total_stock'] ?? 0 ?></p>
+
+    <!-- Totals row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <h6>Total Sold (all time)</h6>
+                    <h2><?= (int)$sales_data['total_sold'] ?></h2>
+                    <small class="text-muted">Revenue: <?= peso($sales_data['total_revenue']) ?></small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <h6>Quick Actions</h6>
+                    <div class="mt-2">
+                        <a href="add_item.php" class="btn btn-primary me-2"><i class="bi bi-plus-circle"></i> Add Product</a>
+                        <a href="inventory.php" class="btn btn-outline-secondary"><i class="bi bi-list"></i> View Inventory</a>
+                        <a href="print_report.php" class="btn btn-secondary ms-2"><i class="bi bi-printer"></i> Print Report</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-warning mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Sold Today</h5>
-                <p class="card-text fs-4"><?= $today['sold_today'] ?? 0 ?></p>
-                <small>Revenue: ₱<?= number_format($today['revenue_today'] ?? 0,2) ?></small>
-            </div>
+
+    <!-- Chart: Last 7 days sold -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Sales (last 7 days)</strong>
+        </div>
+        <div class="card-body">
+            <canvas id="salesChart" height="110"></canvas>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-danger mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Sold This Week</h5>
-                <p class="card-text fs-4"><?= $week['sold_week'] ?? 0 ?></p>
-                <small>Revenue: ₱<?= number_format($week['revenue_week'] ?? 0,2) ?></small>
-            </div>
-        </div>
+
+    <div class="card mb-4">
+    <div class="card-header">
+        <strong>Recently Added Products</strong>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-info mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Sold This Month</h5>
-                <p class="card-text fs-4"><?= $month['sold_month'] ?? 0 ?></p>
-                <small>Revenue: ₱<?= number_format($month['revenue_month'] ?? 0,2) ?></small>
-            </div>
-        </div>
+
+    <div class="card-body table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 80px">Image</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th style="width: 160px">Date Added</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($recent_res && $recent_res->num_rows > 0): ?>
+                    <?php while ($r = $recent_res->fetch_assoc()): ?>
+                        <tr>
+                            <td>
+                                <?php if (!empty($r['primary_image'])): ?>
+                                    <img src="<?= $r['primary_image'] ?>" 
+                                         alt="" 
+                                         class="img-thumbnail" 
+                                         style="width:60px; height:60px; object-fit:cover;">
+                                <?php else: ?>
+                                    <span class="text-muted">No Image</span>
+                                <?php endif; ?>
+                            </td>
+
+                            <td><?= htmlspecialchars($r['name']) ?></td>
+                            <td><?= htmlspecialchars($r['category']) ?></td>
+                            <td><?= peso($r['price']) ?></td>
+                            <td><?= (int)$r['stock'] ?></td>
+
+                            <td>
+                                <?php if ($r['status'] === 'Inactive'): ?>
+                                    <span class="badge bg-secondary">Inactive</span>
+                                <?php else: ?>
+                                    <span class="badge bg-primary">Active</span>
+                                <?php endif; ?>
+                            </td>
+
+                            <td><?= date("M d, Y h:i A", strtotime($r['created_at'])) ?></td>
+                        </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No recently added products</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
-    <!-- Filters -->
-    <form method="GET" class="row g-2 mb-3">
-        <div class="col-md-4">
-            <input type="text" name="search" class="form-control" placeholder="Search product..."
-                value="<?= htmlspecialchars($search) ?>">
-        </div>
-
-        <div class="col-md-3">
-            <select name="category" class="form-select">
-                <option value="">All Categories</option>
-                <?php while ($cat = $cats_result->fetch_assoc()): ?>
-                    <option value="<?= $cat['category'] ?>" <?= ($category == $cat['category']) ? 'selected' : '' ?>>
-                        <?= $cat['category'] ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
-        </div>
-
-        <div class="col-md-2">
-            <button class="btn btn-dark w-100"><i class="bi bi-filter"></i> Filter</button>
-        </div>
-    </form>
-
-    <!-- Inventory Table -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Inventory List</h5>
-        </div>
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>#</th>
-                        <th>Image</th>
-                        <th>Product</th>
-                        <th>Category</th>
-                        <th>Stock</th>
-                        <th>Sold</th>
-                        <th>Revenue</th>
-                        <th>Status</th>
-                        <th>Barcode</th>
-                        <th>Date Added</th>
-                        <th width="200">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $count = $start + 1;
-                    if ($result->num_rows > 0):
-                        while ($row = $result->fetch_assoc()):
-                            $revenue = $row['sold'] * $row['price'];
-                            ?>
-                            <tr class="<?= ($row['stock'] < 5) ? 'table-danger' : '' ?>">
-                                <td><?= $count++ ?></td>
-                                <td>
-                                    <?php if ($row['primary_image'] && file_exists('admin/' . $row['primary_image'])): ?>
-                                        <img src="admin/<?= $row['primary_image'] ?>" width="50">
-                                    <?php else: ?>
-                                        <span class="text-muted">No image</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?= $row['name'] ?></td>
-                                <td><?= $row['category'] ?></td>
-                                <td><b><?= $row['stock'] ?></b></td>
-                                <td><?= $row['sold'] ?></td>
-                                <td>₱<?= number_format($revenue, 2) ?></td>
-                                <td><?= $row['status'] ?></td>
-                                <td>
-                                    <img src="barcode.php?id=<?= $row['product_id'] ?>" width="120">
-                                </td>
-
-                                <td><?= date("M d, Y", strtotime($row['created_at'])) ?></td>
-                                <td>
-                                    <a href="edit_item.php?id=<?= $row['product_id'] ?>" class="btn btn-primary btn-sm mb-1">
-                                        <i class="bi bi-pencil-square"></i> Edit
-                                    </a>
-                                    <a href="delete_item.php?id=<?= $row['product_id'] ?>" class="btn btn-danger btn-sm mb-1"
-                                        onclick="return confirm('Delete this item?');">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </a>
-                                </td>
-                            </tr>
-                            <?php
-                        endwhile;
-                    else:
-                        ?>
-                        <tr>
-                            <td colspan="11" class="text-center text-muted">No items found.</td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-
-            <!-- Pagination -->
-            <?php if ($pages > 1): ?>
-                <nav>
-                    <ul class="pagination">
-                        <?php for ($i = 1; $i <= $pages; $i++): ?>
-                            <li class="page-item <?= ($page == $i) ? 'active' : '' ?>">
-                                <a class="page-link"
-                                    href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&category=<?= urlencode($category) ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-                    </ul>
-                </nav>
-            <?php endif; ?>
-
-        </div>
-    </div>
 </main>
 
-<?php include 'includes/footer.php'; ?>
+<!-- Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = <?= json_encode($chart_days) ?>;
+    const data = <?= json_encode($chart_values) ?>;
+
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Qty sold',
+                data: data,
+                // use default colors (do not force color)
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+</script>
+
+<?php
+// footer
+include 'includes/footer.php';

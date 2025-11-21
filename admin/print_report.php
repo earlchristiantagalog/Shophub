@@ -3,9 +3,9 @@ include 'db.php';
 include 'vendor/autoload.php';
 
 // Store details
-$store_name = "My Store Name";
-$store_address = "123 Main Street, City, Country";
-$store_contact = "Phone: 0917-XXX-XXXX | Email: store@example.com";
+$store_name = "Shophub Electronics and Gadgets";
+$store_address = "D4 Malunhaw St., Purok Raphael Palma, Pulpogan, Consolacion, Cebu";
+$store_contact = "Phone: 0916-821-8393 | Email: shophub@gmail.com";
 
 // Date range filter
 $from = $_GET['from'] ?? date('Y-m-01');
@@ -178,7 +178,26 @@ img { max-width: 60px; height: auto; }
         </tbody>
     </table>
 
-</div>
+    <!-- Prepared By / Reviewed By -->
+    <div class="mt-5" style="width: 100%; margin-top: 40px;">
+        <table style="width: 100%; border: none; margin-top: 40px;">
+            <tr>
+                <td style="width: 50%; text-align: center; padding-top: 50px;">
+                    ________________________________ <br>
+                    <strong>Prepared By</strong><br>
+                    <span style="font-size: 11pt;">(Name & Signature)</span>
+                </td>
+                <td style="width: 50%; text-align: center; padding-top: 50px;">
+                    ________________________________ <br>
+                    <strong>Reviewed By</strong><br>
+                    <span style="font-size: 11pt;">(Name & Signature)</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</div> <!-- container-fluid -->
 
 </body>
 </html>
+

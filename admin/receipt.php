@@ -58,245 +58,221 @@ $estimated = getEstimatedDelivery($order['shipping_method'], $order['order_date'
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waybill - <?= htmlspecialchars($order['order_id']) ?></title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waybill - <?= htmlspecialchars($order['order_id']) ?></title>
+<style>
+    @page { size: A6 portrait; margin: 0; }
 
-    <style>
-        @page {
-            size: A6 portrait;
-            margin: 0;
-        }
+    html, body {
+        width: 105mm;
+        height: 148mm;
+        margin: 0;
+        padding: 0;
+        font-family: 'Arial', sans-serif;
+        background: #fff;
+        font-size: 11px;
+        color: #222;
+    }
 
-        html,
-        body {
-            width: 105mm;
-            height: 148mm;
-            margin: 0;
-            padding: 0;
-            background: #fff;
-            font-family: 'Arial', sans-serif;
-        }
+    body { display: flex; justify-content: center; align-items: center; }
 
-        body {
-            display: flex;
-            justify-content: center;
-        }
+    .waybill {
+        width: 100%;
+        height: 100%;
+        border: 1.5px solid #000;
+        padding: 6px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
 
-        .waybill {
-            width: 100%;
-            height: 100%;
-            border: 1.2px solid #000;
-            padding: 6px 8px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-        }
+    /* HEADER */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 4px;
+        margin-bottom: 4px;
+    }
 
-        /* HEADER */
-        .courier-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1.2px solid #000;
-            padding-bottom: 4px;
-            margin-bottom: 6px;
-        }
+    .header .logo {
+        font-size: 16px;
+        font-weight: 900;
+        color: #d32f2f;
+    }
 
-        .courier-header .logo {
-            font-size: 16px;
-            font-weight: 900;
-            color: #d32f2f;
-        }
+    .header .order-info {
+        text-align: right;
+        font-size: 10px;
+    }
 
-        .courier-header .route {
-            font-size: 9px;
-            text-align: right;
-        }
+    .order-info div { line-height: 1.2; }
 
-        /* BARCODE */
-        .barcode-box {
-            text-align: center;
-            border-bottom: 1.2px solid #000;
-            padding-bottom: 6px;
-            margin-bottom: 8px;
-        }
+    /* SHIP INFO */
+    .ship-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
 
-        .barcode-box img {
-            width: 140px;
-            height: 140px;
-            margin: 0 auto;
-        }
+    .ship-box {
+        width: 49%;
+        border: 1px solid #000;
+        border-radius: 3px;
+        padding: 4px;
+    }
 
+    .ship-box strong { font-size: 12px; }
+    .ship-title {
+        font-weight: bold;
+        font-size: 11px;
+        margin-bottom: 2px;
+        background: #000;
+        color: #fff;
+        padding: 2px 4px;
+        border-radius: 2px;
+    }
 
-        .tracking-number {
-            font-size: 16px;
-            font-weight: bold;
-        }
+    /* BARCODE / QR */
+    .barcode-box {
+        text-align: center;
+        margin: 4px 0;
+        border-bottom: 1px solid #000;
+        padding-bottom: 4px;
+    }
 
-        .order-id {
-            font-size: 11px;
-        }
+    .barcode-box img {
+        width: 130px;
+        height: 130px;
+        border: 1px solid #000;
+        padding: 3px;
+        margin-bottom: 2px;
+    }
 
-        /* SECTION TITLE */
-        .section-title {
-            font-weight: bold;
-            font-size: 12px;
-            background: #000;
-            color: #fff;
-            padding: 3px 5px;
-        }
+    .tracking-number { font-weight: bold; font-size: 14px; margin-bottom: 2px; }
+    .order-id { font-size: 10px; color: #555; }
 
-        /* BOX CONTAINER */
-        .section-box {
-            border: 1px solid #000;
-            padding: 6px;
-            margin-bottom: 8px;
-        }
+    /* DETAILS GRID */
+    .details {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2px 6px;
+        border: 1px solid #000;
+        border-radius: 3px;
+        padding: 4px;
+        margin-bottom: 4px;
+    }
 
-        /* INFO TEXT (BIGGER) */
-        .info {
-            font-size: 11px;
-            line-height: 1.4;
-        }
+    .details div strong { display: inline-block; width: 50px; }
 
-        /* GRID (BIGGER TEXT) */
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px 10px;
-            font-size: 11px;
-        }
+    /* FOOTER */
+    .footer {
+        font-size: 9px;
+        border-top: 1px solid #000;
+        padding-top: 2px;
+        text-align: center;
+        color: #555;
+    }
 
-        /* FOOTER */
-        .bottom {
-            border-top: 1px solid #000;
-            margin-top: auto;
-            padding-top: 4px;
-            font-size: 9px;
-        }
+    /* BUTTON HIDDEN PRINT */
+    @media print { .pdf-button { display: none; } }
 
-        /* Hide button on print */
-        @media print {
-            .pdf-button {
-                display: none;
-            }
-        }
-
-        .pdf-button {
-            display: block;
-            background: black;
-            color: white;
-            border-radius: 4px;
-            padding: 6px;
-            text-align: center;
-            font-size: 11px;
-            margin-top: 6px;
-        }
-    </style>
+    .pdf-button {
+        display: block;
+        background: #000;
+        color: #fff;
+        border-radius: 4px;
+        padding: 5px;
+        text-align: center;
+        font-size: 11px;
+        margin-top: 4px;
+        text-decoration: none;
+    }
+</style>
 </head>
-
 <body>
-    <div class="waybill" id="content">
+<div class="waybill" id="content">
 
-        <!-- HEADER -->
-        <div class="courier-header">
-            <div class="logo">Shophub Express</div>
-            <div class="route">
-                RTS Code: SHB-C254-BNA-03-02<br>
-                Region: CEB-BN
-            </div>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo">Shophub Express</div>
+        <div class="order-info">
+            <div>Order ID: <?= htmlspecialchars($order['order_id']) ?></div>
+            <div>RTS: SHB-C254-BNA</div>
+            <div>Region: CEB-BN</div>
         </div>
-
-        <!-- BARCODE -->
-        <div class="barcode-box">
-            <?php if ($tracking_number !== 'PENDING'): ?>
-               <img src="qr.php?code=<?= urlencode($tracking_number) ?>" alt="QR Code">
-
-            <?php else: ?>
-                <div style="width:140px;height:140px;border:1px solid #000;margin:0 auto;
-                display:flex;align-items:center;justify-content:center;font-size:12px;">
-                    NO QR AVAILABLE
-                </div>
-            <?php endif; ?>
-
-            <div class="tracking-number"><?= htmlspecialchars($tracking_number) ?></div>
-            <div class="order-id">Order ID: <?= htmlspecialchars($order['order_id']) ?></div>
-        </div>
-
-        <div class="section-box">
-            <div class="section-title">SHIP TO</div>
-            <div class="info">
-                <strong><?= htmlspecialchars($order['first_name'] . ' ' . $order['last_name']) ?></strong><br>
-                <?= htmlspecialchars($order['address_line_1']) ?>, <?= htmlspecialchars($order['barangay']) ?>,
-                <?= htmlspecialchars($order['city']) ?>, <?= htmlspecialchars($order['province']) ?><br>
-                <?= htmlspecialchars($order['region']) ?> <?= htmlspecialchars($order['zip_code']) ?><br>
-                📞 <?= htmlspecialchars($order['phone']) ?>
-            </div>
-        </div>
-
-
-        <div class="section-box">
-            <div class="section-title">SHIP FROM</div>
-            <div class="info">
-                <strong><?= htmlspecialchars($seller_name) ?></strong><br>
-                <?= htmlspecialchars($seller_address) ?><br>
-                📞 <?= htmlspecialchars($seller_phone) ?>
-            </div>
-        </div>
-
-
-        <div class="section-box">
-            <div class="section-title">DETAILS</div>
-            <div class="grid">
-                <div><strong>Method:</strong> <?= htmlspecialchars($order['shipping_method']) ?></div>
-                <div><strong>Date:</strong> <?= date('M d, Y', strtotime($order['order_date'])) ?></div>
-                <div><strong>Amount:</strong> ₱<?= number_format($order['total'], 2) ?></div>
-                <div><strong>ETA:</strong> <?= htmlspecialchars($estimated) ?></div>
-            </div>
-        </div>
-
-
-        <!-- FOOTER -->
-        <div class="bottom">
-            <strong>Shophub Express</strong> • Waybill for delivery<br>
-        </div>
-
-        <a href="#" class="pdf-button" id="downloadBtn"
-            data-order-id="<?= htmlspecialchars($order['order_id']) ?>">Download PDF</a>
     </div>
 
-    <!-- JS FOR PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        document.getElementById("downloadBtn").addEventListener("click", async function (e) {
-            e.preventDefault();
+    <!-- SHIP INFO -->
+    <div class="ship-info">
+        <div class="ship-box">
+            <div class="ship-title">SHIP TO</div>
+            <div><strong><?= htmlspecialchars($order['first_name'].' '.$order['last_name']) ?></strong></div>
+            <div><?= htmlspecialchars($order['address_line_1']) ?>, <?= htmlspecialchars($order['barangay']) ?></div>
+            <div><?= htmlspecialchars($order['city']) ?>, <?= htmlspecialchars($order['province']) ?></div>
+            <div><?= htmlspecialchars($order['region']) ?> <?= htmlspecialchars($order['zip_code']) ?></div>
+            <div style="font-size: large; color: black;"><?= htmlspecialchars($order['phone']) ?></div>
+        </div>
+        <div class="ship-box">
+            <div class="ship-title">SHIP FROM</div>
+            <div><strong><?= htmlspecialchars($seller_name) ?></strong></div>
+            <div><?= htmlspecialchars($seller_address) ?></div>
+            <div style="font-size: large; color: black;"><?= htmlspecialchars($seller_phone) ?></div>
+        </div>
+    </div>
 
-            const btn = this;
-            btn.style.display = "none";
+    <!-- BARCODE / QR -->
+    <div class="barcode-box">
+        <?php if ($tracking_number !== 'PENDING'): ?>
+            <img src="qr.php?code=<?= urlencode($tracking_number) ?>" alt="QR Code">
+        <?php else: ?>
+            <div style="width:130px;height:130px;border:1px solid #000;margin:0 auto;
+            display:flex;align-items:center;justify-content:center;font-size:12px;">NO QR</div>
+        <?php endif; ?>
+        <div class="tracking-number"><?= htmlspecialchars($tracking_number) ?></div>
+        <div class="order-id">Order Date: <?= date('M d, Y', strtotime($order['order_date'])) ?></div>
+    </div>
 
-            const content = document.getElementById("content");
-            const { jsPDF } = window.jspdf;
+    <!-- DETAILS -->
+    <div class="details">
+        <div><strong>Method:</strong> <?= htmlspecialchars($order['shipping_method']) ?></div>
+        <div><strong>Amount:</strong> ₱<?= number_format($order['total'], 2) ?></div>
+        <div><strong>ETA:</strong> <?= htmlspecialchars($estimated) ?></div>
+        <div><strong>Fee:</strong> ₱<?= number_format($order['shipping_fee'], 2) ?></div>
+    </div>
 
-            const canvas = await html2canvas(content, { scale: 3, useCORS: true });
-            const imgData = canvas.toDataURL("image/png");
+    <!-- FOOTER -->
+    <div class="footer">
+        Shophub Express • Waybill for delivery
+    </div>
 
-            const pdf = new jsPDF({
-                orientation: "portrait",
-                unit: "mm",
-                format: [105, 148]
-            });
+    <a href="#" class="pdf-button" id="downloadBtn" data-order-id="<?= htmlspecialchars($order['order_id']) ?>">Download PDF</a>
+</div>
 
-            pdf.addImage(imgData, "PNG", 0, 0, 105, 148);
-            pdf.save(`Waybill_${btn.dataset.orderId}.pdf`);
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+document.getElementById("downloadBtn").addEventListener("click", async function(e){
+    e.preventDefault();
+    const btn = this;
+    btn.style.display = "none";
 
-            setTimeout(() => btn.style.display = "block", 600);
-        });
-    </script>
+    const content = document.getElementById("content");
+    const { jsPDF } = window.jspdf;
 
+    const canvas = await html2canvas(content, { scale: 3, useCORS: true });
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [105,148] });
+    pdf.addImage(imgData, "PNG", 0, 0, 105, 148);
+    pdf.save(`Waybill_${btn.dataset.orderId}.pdf`);
+
+    setTimeout(() => btn.style.display = "block", 600);
+});
+</script>
 </body>
-
 </html>

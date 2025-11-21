@@ -9,195 +9,407 @@ $store_contact = "Phone: 0916-821-8393 | Email: shophub@gmail.com";
 
 // Date range filter
 $from = $_GET['from'] ?? date('Y-m-01');
-$to   = $_GET['to'] ?? date('Y-m-d');
+$to = $_GET['to'] ?? date('Y-m-d');
 
-// Overall Sales Summary
-$sales = $conn->query("SELECT 
-    COUNT(*) AS total_products,
-    SUM(stock) AS total_stock,
-    SUM(sold) AS total_sold,
-    SUM(sold * price) AS total_revenue
-    FROM inventory
-    WHERE DATE(created_at) BETWEEN '$from' AND '$to'");
-$sales_data = $sales->fetch_assoc();
+/* Overall totals */
+$sales_q = "
+    SELECT
+        COUNT(*) AS total_products,
+        IFNULL(SUM(stock),0) AS total_stock,
+        IFNULL(SUM(sold),0) AS total_sold,
+        IFNULL(SUM(sold * price),0) AS total_revenue
+    FROM products
+";
+$sales_res = $conn->query($sales_q);
+$sales_data = $sales_res ? $sales_res->fetch_assoc() : [
+    'total_products' => 0,
+    'total_stock' => 0,
+    'total_sold' => 0,
+    'total_revenue' => 0
+];
 
-// Additional Sales Metrics
-$today_sales = $conn->query("SELECT SUM(sold * price) AS revenue_today, SUM(sold) AS sold_today
-    FROM inventory WHERE DATE(created_at) = CURDATE()");
-$today = $today_sales->fetch_assoc();
 
-$week_sales = $conn->query("SELECT SUM(sold * price) AS revenue_week, SUM(sold) AS sold_week
-    FROM inventory WHERE YEARWEEK(created_at,1) = YEARWEEK(CURDATE(),1)");
-$week = $week_sales->fetch_assoc();
+// Additional metrics
+/* Today */
+$today = "
+    SELECT
+        IFNULL(SUM(oi.quantity),0) AS sold_today,
+        IFNULL(SUM(oi.quantity * oi.price),0) AS revenue_today
+    FROM order_items oi
+    INNER JOIN orders o ON oi.order_id = o.order_id
+    WHERE o.status = 'Delivered'
+      AND DATE(o.order_date) = CURDATE()
+";
+$today_res = $conn->query($today);
+$today = $today_res ? $today_res->fetch_assoc() : ['sold_today' => 0, 'revenue_today' => 0];
 
-$month_sales = $conn->query("SELECT SUM(sold * price) AS revenue_month, SUM(sold) AS sold_month
-    FROM inventory WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
-$month = $month_sales->fetch_assoc();
+/* This week (ISO week, YEARWEEK with mode 1) */
+$week = "
+    SELECT
+        IFNULL(SUM(oi.quantity),0) AS sold_week,
+        IFNULL(SUM(oi.quantity * oi.price),0) AS revenue_week
+    FROM order_items oi
+    INNER JOIN orders o ON oi.order_id = o.order_id
+    WHERE o.status = 'Delivered'
+      AND YEARWEEK(o.order_date, 1) = YEARWEEK(CURDATE(), 1)
+";
+$week_res = $conn->query($week);
+$week = $week_res ? $week_res->fetch_assoc() : ['sold_week' => 0, 'revenue_week' => 0];
 
-// Inventory Data
-$result = $conn->query("SELECT i.*, pi.image_path AS primary_image
-    FROM inventory i
-    LEFT JOIN product_images pi
-    ON i.product_id = pi.product_id AND pi.is_primary = 1
-    WHERE DATE(i.created_at) BETWEEN '$from' AND '$to'
-    ORDER BY i.product_id DESC");
+/* This month */
+$month = "
+    SELECT
+        IFNULL(SUM(oi.quantity),0) AS sold_month,
+        IFNULL(SUM(oi.quantity * oi.price),0) AS revenue_month
+    FROM order_items oi
+    INNER JOIN orders o ON oi.order_id = o.order_id
+    WHERE o.status = 'Delivered'
+      AND MONTH(o.order_date) = MONTH(CURDATE())
+      AND YEAR(o.order_date) = YEAR(CURDATE())
+";
+$month_res = $conn->query($month);
+$month = $month_res ? $month_res->fetch_assoc() : ['sold_month' => 0, 'revenue_month' => 0];
+
+$result = $conn->query("
+    SELECT p.*, pi.image_path AS primary_image
+    FROM products p
+    LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
+    ORDER BY p.created_at DESC
+");
+
+
+// Recently added products
+$recent_added = $conn->query("SELECT i.*, pi.image_path AS primary_image FROM inventory i LEFT JOIN product_images pi ON i.product_id = pi.product_id AND pi.is_primary = 1 WHERE DATE(i.created_at) BETWEEN '$from' AND '$to' ORDER BY i.created_at DESC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Sales & Inventory Report</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-/* Landscape A4 Setup */
-@page { size: A4 landscape; margin: 15mm; }
-body { font-family: Arial, sans-serif; font-size: 12pt; color: #333; padding: 0; }
-.no-print { display: none !important; }
+    <meta charset="UTF-8">
+    <title>Sales & Inventory Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Landscape setup */
+        @page {
+            size: A4 landscape;
+            margin: 15mm;
+        }
 
-/* Header */
-.report-header { text-align: center; margin-bottom: 15px; }
-.report-header h2 { margin: 0; font-weight: bold; }
-.report-header p { margin: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 12pt;
+            color: #333;
+        }
 
-/* Summary Table */
-.table-summary th, .table-summary td { text-align: center; font-weight: bold; padding: 5px; }
+        .no-print {
+            display: none !important;
+        }
 
-/* Inventory Table */
-.table-inventory th, .table-inventory td { border: 1px solid #444 !important; padding: 5px; vertical-align: middle; }
-.table-inventory th { background-color: #f5f5f5; }
-.table-inventory tbody tr:nth-child(even) { background-color: #f9f9f9; }
-.table-danger { background-color: #f8d7da !important; }
+        /* Header */
+        .report-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
 
-/* Images */
-img { max-width: 60px; height: auto; }
+        .report-header h2 {
+            font-weight: bold;
+            color: #2c3e50;
+        }
 
-/* Print adjustments */
-@media print {
-    .no-print { display: none !important; }
-    thead { display: table-header-group; }
-    tfoot { display: table-footer-group; }
-}
-</style>
+        .report-header p {
+            margin: 0;
+            font-size: 10pt;
+            color: #555;
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            flex: 1;
+            min-width: 150px;
+            padding: 20px;
+            border-radius: 12px;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card i {
+            font-size: 2rem;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            opacity: 0.2;
+        }
+
+        .summary-card h5 {
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-card p {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        /* Gradient colors */
+        .bg-primary {
+            background: linear-gradient(135deg, #1d62f0, #6a8ff2);
+        }
+
+        .bg-success {
+            background: linear-gradient(135deg, #28a745, #6dd77f);
+        }
+
+        .bg-warning {
+            background: linear-gradient(135deg, #ffc107, #ffe082);
+            color: #212529;
+        }
+
+        .bg-danger {
+            background: linear-gradient(135deg, #dc3545, #e57373);
+        }
+
+        .bg-info {
+            background: linear-gradient(135deg, #17a2b8, #5bc0de);
+        }
+
+        /* Inventory Table */
+        .table-inventory {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .table-inventory th,
+        .table-inventory td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .table-inventory th {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .table-inventory tbody tr:hover {
+            background-color: #f1f1f1;
+            transition: 0.3s;
+        }
+
+        .table-danger {
+            background-color: #f8d7da !important;
+        }
+
+        /* Status badge */
+        .badge-available {
+            background-color: #28a745;
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .badge-unavailable {
+            background-color: #dc3545;
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        /* Recently Added Products Card */
+        .recent-card {
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            background-color: #fefefe;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .recent-card h5 {
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Images */
+        img {
+            max-width: 60px;
+            height: auto;
+            border-radius: 6px;
+        }
+
+        /* Print adjustments */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
+
 <body>
+    <div class="container-fluid p-4">
 
-<div class="container-fluid">
+        <!-- Header -->
+        <div class="report-header">
+            <h2><?= $store_name ?></h2>
+            <p><?= $store_address ?></p>
+            <p><?= $store_contact ?></p>
+            <h4>Sales & Inventory Report</h4>
+            <p>From <?= date('M d, Y', strtotime($from)) ?> to <?= date('M d, Y', strtotime($to)) ?></p>
+        </div>
 
-    <!-- Header / Store Info -->
-    <div class="report-header">
-        <h2><?= $store_name ?></h2>
-        <p><?= $store_address ?></p>
-        <p><?= $store_contact ?></p>
-        <h4>Sales & Inventory Report</h4>
-        <p>From: <?= date('M d, Y', strtotime($from)) ?> To: <?= date('M d, Y', strtotime($to)) ?></p>
-        <button class="btn btn-secondary no-print mb-3" onclick="window.print()">Print</button>
-    </div>
+        <!-- Summary Table -->
+        <div class="table-responsive">
+            <table class="table table-bordered text-center" style="font-weight: bold; font-size: 14px;">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Total Products</th>
+                        <th>Total Stock</th>
+                        <th>Sold Today</th>
+                        <th>Sold This Week</th>
+                        <th>Sold This Month</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><?= $sales_data['total_products'] ?? 0 ?></td>
+                        <td><?= $sales_data['total_stock'] ?? 0 ?></td>
+                        <td>
+                            <?= $today['sold_today'] ?? 0 ?><br>
+                            <small>₱<?= number_format($today['revenue_today'] ?? 0, 2) ?></small>
+                        </td>
+                        <td>
+                            <?= $week['sold_week'] ?? 0 ?><br>
+                            <small>₱<?= number_format($week['revenue_week'] ?? 0, 2) ?></small>
+                        </td>
+                        <td>
+                            <?= $month['sold_month'] ?? 0 ?><br>
+                            <small>₱<?= number_format($month['revenue_month'] ?? 0, 2) ?></small>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-    <!-- Summary Table -->
-    <table class="table table-bordered table-summary mb-4">
-        <thead>
-            <tr>
-                <th>Total Products</th>
-                <th>Total Stock</th>
-                <th>Total Sold</th>
-                <th>Total Revenue</th>
-                <th>Sold Today</th>
-                <th>Revenue Today</th>
-                <th>Sold This Week</th>
-                <th>Revenue This Week</th>
-                <th>Sold This Month</th>
-                <th>Revenue This Month</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><?= $sales_data['total_products'] ?? 0 ?></td>
-                <td><?= $sales_data['total_stock'] ?? 0 ?></td>
-                <td><?= $sales_data['total_sold'] ?? 0 ?></td>
-                <td>₱<?= number_format($sales_data['total_revenue'] ?? 0,2) ?></td>
-                <td><?= $today['sold_today'] ?? 0 ?></td>
-                <td>₱<?= number_format($today['revenue_today'] ?? 0,2) ?></td>
-                <td><?= $week['sold_week'] ?? 0 ?></td>
-                <td>₱<?= number_format($week['revenue_week'] ?? 0,2) ?></td>
-                <td><?= $month['sold_month'] ?? 0 ?></td>
-                <td>₱<?= number_format($month['revenue_month'] ?? 0,2) ?></td>
-            </tr>
-        </tbody>
-    </table>
+        <style>
+            .table thead th {
+                font-weight: bold;
+                font-size: 15px;
+                background-color: #343a40;
+                /* dark header */
+                color: #fff;
+            }
 
-    <!-- Inventory Table -->
-    <table class="table table-bordered table-inventory">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Image</th>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Stock</th>
-                <th>Sold</th>
-                <th>Revenue</th>
-                <th>Status</th>
-                <th>Barcode</th>
-                <th>Date Added</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php
-        $count = 1;
-        if($result->num_rows > 0):
-            while($row = $result->fetch_assoc()):
-                $revenue = $row['sold'] * $row['price'];
-                $row_class = ($row['stock'] < 5) ? 'table-danger' : '';
-        ?>
-            <tr class="<?= $row_class ?>">
-                <td><?= $count++ ?></td>
-                <td>
-                    <?php if($row['primary_image'] && file_exists('uploads/'.$row['primary_image'])): ?>
-                        <img src="uploads/<?= $row['primary_image'] ?>">
-                    <?php else: ?>
-                        <span class="text-muted">No image</span>
-                    <?php endif; ?>
-                </td>
-                <td><?= $row['name'] ?></td>
-                <td><?= $row['category'] ?></td>
-                <td><?= $row['stock'] ?></td>
-                <td><?= $row['sold'] ?></td>
-                <td>₱<?= number_format($revenue,2) ?></td>
-                <td><?= $row['status'] == 0 ? 'Available': 'Not Available'?></td>
-                <td><img src="barcode.php?id=<?= $row['product_id'] ?>" width="100"></td>
-                <td><?= date("M d, Y", strtotime($row['created_at'])) ?></td>
-            </tr>
-        <?php
-            endwhile;
-        else:
-        ?>
-            <tr>
-                <td colspan="10" class="text-center">No items found.</td>
-            </tr>
-        <?php endif; ?>
-        </tbody>
-    </table>
+            .table tbody td {
+                font-weight: bold;
+                font-size: 14px;
+            }
 
-    <!-- Prepared By / Reviewed By -->
-    <div class="mt-5" style="width: 100%; margin-top: 40px;">
-        <table style="width: 100%; border: none; margin-top: 40px;">
-            <tr>
-                <td style="width: 50%; text-align: center; padding-top: 50px;">
-                    ________________________________ <br>
-                    <strong>Prepared By</strong><br>
-                    <span style="font-size: 11pt;">(Name & Signature)</span>
-                </td>
-                <td style="width: 50%; text-align: center; padding-top: 50px;">
-                    ________________________________ <br>
-                    <strong>Reviewed By</strong><br>
-                    <span style="font-size: 11pt;">(Name & Signature)</span>
-                </td>
-            </tr>
+            .table tbody small {
+                font-weight: normal;
+                font-size: 12px;
+                color: #555;
+            }
+
+            .table-bordered {
+                border: 2px solid #333;
+            }
+
+            .table-bordered th,
+            .table-bordered td {
+                border: 1px solid #333 !important;
+            }
+        </style>
+        <!-- Full Inventory Table -->
+        <table class="table table-inventory">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Image</th>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Stock</th>
+                    <th>Sold</th>
+                    <th>Revenue</th>
+                    <th>Status</th>
+                    <th>Barcode</th>
+                    <th>Date Added</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $count = 1;
+                if ($result->num_rows > 0):
+                    while ($row = $result->fetch_assoc()):
+                        $revenue = $row['sold'] * $row['price'];
+                        $row_class = ($row['stock'] < 5) ? 'table-danger' : '';
+                        $status_badge = $row['status'] == 'active' ? '<span class="badge-available">Available</span>' : '<span class="badge-unavailable">Not Available</span>';
+                        ?>
+                        <tr class="<?= $row_class ?>">
+                            <td><?= $count++ ?></td>
+                            <td>
+                                <?php if (!empty($row['primary_image'])): ?>
+                                    <img src="<?= $row['primary_image'] ?>" alt="" class="img-thumbnail"
+                                        style="width:60px; height:60px; object-fit:cover;">
+                                <?php else: ?>
+                                    <span class="text-muted">No Image</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?= $row['name'] ?></td>
+                            <td><?= $row['category'] ?></td>
+                            <td><?= $row['stock'] ?></td>
+                            <td><?= $row['sold'] ?></td>
+                            <td>₱<?= number_format($revenue, 2) ?></td>
+                            <td><?= $status_badge ?></td>
+                            <td><img src="barcode.php?id=<?= $row['product_id'] ?>" width="80"></td>
+                            <td><?= date("M d, Y", strtotime($row['created_at'])) ?></td>
+                        </tr>
+                    <?php endwhile; else: ?>
+                    <tr>
+                        <td colspan="10" class="text-center">No items found.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
         </table>
+
+        <!-- Prepared/Reviewed By -->
+        <div class="d-flex justify-content-between mt-5">
+            <div class="text-center">
+                ________________________________<br>
+                <strong>Prepared By</strong><br>
+                <span style="font-size: 11pt;">(Name & Signature)</span>
+            </div>
+            <div class="text-center">
+                ________________________________<br>
+                <strong>Reviewed By</strong><br>
+                <span style="font-size: 11pt;">(Name & Signature)</span>
+            </div>
+        </div>
+
     </div>
-
-</div> <!-- container-fluid -->
-
 </body>
-</html>
 
+</html>

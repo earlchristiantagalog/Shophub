@@ -14,21 +14,20 @@ if (!isset($conn)) {
    Use IFNULL so aggregates return 0 instead of NULL
 --------------------------- */
 
-/* Overall totals (products, stock, sold, revenue) */
+/* Overall totals */
 $sales_q = "
     SELECT
-        COUNT(DISTINCT i.product_id) AS total_products,
-        IFNULL(SUM(i.stock), 0) AS total_stock,
-        IFNULL(SUM(oi.quantity), 0) AS total_sold,
-        IFNULL(SUM(oi.quantity * oi.price), 0) AS total_revenue
-    FROM inventory i
-    LEFT JOIN order_items oi ON i.product_id = oi.product_id
-    LEFT JOIN orders o ON oi.order_id = o.order_id AND o.status = 'Accepted'
+        COUNT(*) AS total_products,
+        IFNULL(SUM(stock),0) AS total_stock,
+        IFNULL(SUM(sold),0) AS total_sold,
+        IFNULL(SUM(sold * price),0) AS total_revenue
+    FROM products
 ";
 $sales_res = $conn->query($sales_q);
 $sales_data = $sales_res ? $sales_res->fetch_assoc() : [
-    'total_products' => 0, 'total_stock' => 0, 'total_sold' => 0, 'total_revenue' => 0
+    'total_products'=>0, 'total_stock'=>0, 'total_sold'=>0, 'total_revenue'=>0
 ];
+
 
 /* Today */
 $today_q = "
@@ -37,7 +36,7 @@ $today_q = "
         IFNULL(SUM(oi.quantity * oi.price),0) AS revenue_today
     FROM order_items oi
     INNER JOIN orders o ON oi.order_id = o.order_id
-    WHERE o.status = 'Accepted'
+    WHERE o.status = 'Delivered'
       AND DATE(o.order_date) = CURDATE()
 ";
 $today_res = $conn->query($today_q);
@@ -50,7 +49,7 @@ $week_q = "
         IFNULL(SUM(oi.quantity * oi.price),0) AS revenue_week
     FROM order_items oi
     INNER JOIN orders o ON oi.order_id = o.order_id
-    WHERE o.status = 'Accepted'
+    WHERE o.status = 'Delivered'
       AND YEARWEEK(o.order_date, 1) = YEARWEEK(CURDATE(), 1)
 ";
 $week_res = $conn->query($week_q);
@@ -63,7 +62,7 @@ $month_q = "
         IFNULL(SUM(oi.quantity * oi.price),0) AS revenue_month
     FROM order_items oi
     INNER JOIN orders o ON oi.order_id = o.order_id
-    WHERE o.status = 'Accepted'
+    WHERE o.status = 'Delivered'
       AND MONTH(o.order_date) = MONTH(CURDATE())
       AND YEAR(o.order_date) = YEAR(CURDATE())
 ";
@@ -84,7 +83,7 @@ $chart_q = "
     SELECT DATE(o.order_date) AS dt, IFNULL(SUM(oi.quantity),0) AS qty
     FROM orders o
     LEFT JOIN order_items oi ON o.order_id = oi.order_id
-    WHERE o.status = 'Accepted'
+    WHERE o.status = 'Delivered'
       AND DATE(o.order_date) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
     GROUP BY DATE(o.order_date)
     ORDER BY DATE(o.order_date) ASC
@@ -108,12 +107,12 @@ for ($i = 6; $i >= 0; $i--) {
 /* Recently Added Products (latest 10) */
 $recent_q = "
     SELECT 
-        i.*, 
+        p.*, 
         pi.image_path AS primary_image
-    FROM inventory i
+    FROM products p
     LEFT JOIN product_images pi 
-        ON i.product_id = pi.product_id AND pi.is_primary = 1
-    ORDER BY i.created_at DESC
+        ON p.product_id = pi.product_id AND pi.is_primary = 1
+    ORDER BY p.created_at DESC
     LIMIT 10
 ";
 
@@ -136,6 +135,7 @@ $recent_res = $conn->query($recent_q);
         <div>
             <a href="inventory.php" class="btn btn-outline-secondary me-2"><i class="bi bi-box-seam"></i> Inventory</a>
             <a href="add_item.php" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Product</a>
+            <a href="print_report.php" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Print</a>
         </div>
     </div>
 
@@ -241,19 +241,6 @@ $recent_res = $conn->query($recent_q);
                 </div>
             </div>
         </div>
-
-        <div class="col-md-6">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <h6>Quick Actions</h6>
-                    <div class="mt-2">
-                        <a href="add_item.php" class="btn btn-primary me-2"><i class="bi bi-plus-circle"></i> Add Product</a>
-                        <a href="inventory.php" class="btn btn-outline-secondary"><i class="bi bi-list"></i> View Inventory</a>
-                        <a href="print_report.php" class="btn btn-secondary ms-2"><i class="bi bi-printer"></i> Print Report</a>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Chart: Last 7 days sold -->
@@ -324,9 +311,34 @@ $recent_res = $conn->query($recent_q);
         </table>
     </div>
 </div>
+<!-- Toast container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="syncToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Products synced successfully!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
 
 </main>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Check if sync was successful
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.get('sync') === 'success') {
+        const toastEl = document.getElementById('syncToast');
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
 
+        // Remove query param to prevent toast showing again on refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+});
+</script>
 <!-- Chart.js from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
